@@ -1,0 +1,26 @@
+const forma_pago=(sequelize,type)=>{
+    return sequelize.define('forma_pagos',{
+        id_forma_pago:{
+            type:type.INTEGER,
+            primaryKey:true,
+            autoIncrement:true 
+        },
+        efectivo: type.STRING(99),
+        tarjeta: type.STRING(99),
+
+        crearFormaPago:{
+            type:'TIMESTAMP',
+            defaultValue: type.literal('CURRENT_TIMESTAMP'),
+            allowNull:false
+        },
+        actualizarFormaPago:{
+            type:'TIMESTAMP',
+            defaultValue: type.literal('CURRENT_TIMESTAMP'),
+            allowNull:false
+        }
+    }, { timestamps:false,
+
+    });
+
+}
+module.exports = forma_pago
