@@ -22,7 +22,9 @@ const MetodosPagoCliente: React.FC = () => {
             <h3>{metodo.nombre}</h3>
             <p>{metodo.descripcion}</p>
             <div className="metodo-estado">
-              <span className="estado-activo">Disponible</span>
+              <span className={metodo.activo ? "estado-activo" : "estado-inactivo"}>
+                {metodo.activo ? 'Disponible' : 'No disponible'}
+              </span>
             </div>
           </div>
         ))}
@@ -33,7 +35,9 @@ const MetodosPagoCliente: React.FC = () => {
         <p>Seleccione uno o varios métodos para su factura:</p>
         
         <div className="metodos-seleccion">
-          {metodos.map(metodo => (
+          {metodos
+            .filter(metodo => metodo.activo) // Solo mostrar métodos activos para selección
+            .map(metodo => (
             <div key={metodo.id} className="metodo-seleccion-item">
               <input 
                 type="checkbox" 

@@ -3,6 +3,9 @@ import { MetodoPagoEntity } from '../../domain/entities/MetodoPago';
 
 const API_BASE_URL = 'http://localhost:4200';
 
+// Alias para mantener consistencia entre nombre en frontend y backend
+const METODOS_ENDPOINT = '/api/formas_pago';
+
 interface MetodoPagoAPI {
   id: number;
   nombre: string;
@@ -13,7 +16,7 @@ interface MetodoPagoAPI {
 export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
   async getAll(): Promise<MetodoPagoEntity[]> {
     // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}/api/metodos-pago`);
+    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}`);
     const data: MetodoPagoAPI[] = await response.json();
     
     return data.map((item: MetodoPagoAPI) => 
@@ -28,7 +31,7 @@ export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
 
   async getById(id: number): Promise<MetodoPagoEntity | null> {
     // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}/api/metodos-pago/${id}`);
+    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`);
     if (!response.ok) return null;
     
     const data: MetodoPagoAPI = await response.json();
@@ -42,7 +45,7 @@ export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
 
   async create(metodo: MetodoPagoEntity): Promise<MetodoPagoEntity> {
     // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}/api/metodos-pago`, {
+    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +64,7 @@ export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
 
   async update(id: number, metodo: Partial<MetodoPagoEntity>): Promise<MetodoPagoEntity | null> {
     // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}/api/metodos-pago/${id}`, {
+    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +85,7 @@ export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
 
   async delete(id: number): Promise<boolean> {
     // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}/api/metodos-pago/${id}`, {
+    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`, {
       method: 'DELETE',
     });
     
@@ -91,7 +94,7 @@ export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
 
   async getActive(): Promise<MetodoPagoEntity[]> {
     // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}/api/metodos-pago?activo=true`);
+    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/activas`);
     const data: MetodoPagoAPI[] = await response.json();
     
     return data.map((item: MetodoPagoAPI) => 

@@ -29,11 +29,12 @@ formaPagoCtl.obtenerFormaPago = async (req, res) => {
 
 formaPagoCtl.crearFormaPago = async (req, res) => {
     try {
-        const { efectivo, tarjeta } = req.body;
+        const { nombre, descripcion } = req.body;
         
         const nuevaFormaPago = {
-            efectivo,
-            tarjeta
+            nombre,
+            descripcion,
+            activo: true
         };
         
         const resultado = await orm.forma_pago.create(nuevaFormaPago);
@@ -46,11 +47,12 @@ formaPagoCtl.crearFormaPago = async (req, res) => {
 formaPagoCtl.actualizarFormaPago = async (req, res) => {
     try {
         const id = req.params.id;
-        const { efectivo, tarjeta } = req.body;
+        const { nombre, descripcion, activo } = req.body;
         
         const formaPagoActualizada = {
-            efectivo,
-            tarjeta
+            nombre,
+            descripcion,
+            activo
         };
         
         const formaPago = await orm.forma_pago.findOne({ where: { id_forma_pago: id } });
@@ -74,6 +76,15 @@ formaPagoCtl.eliminarFormaPago = async (req, res) => {
         } else {
             res.status(404).json({ message: 'Forma de pago no encontrada' });
         }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+formaPagoCtl.listarFormasPagoActivas = async (req, res) => {
+    try {
+        const formasPago = await sql.query('SELECT * FROM forma_pagos WHERE activo = 1');
+        res.json(formasPago);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

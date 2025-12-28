@@ -5,8 +5,12 @@ const forma_pago=(sequelize,type)=>{
             primaryKey:true,
             autoIncrement:true 
         },
-        efectivo: type.STRING(99),
-        tarjeta: type.STRING(99),
+        nombre: type.STRING,
+        descripcion: type.STRING,
+        activo: {
+            type: type.BOOLEAN,
+            defaultValue: true
+        },
 
         crearFormaPago:{
             type:'TIMESTAMP',
