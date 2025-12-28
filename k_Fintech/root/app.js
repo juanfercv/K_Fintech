@@ -66,7 +66,7 @@ app.use(bodyparser.urlencoded({
 
 app.use(bodyparser.json());
 app.use(cors({
-    origin: 'http://localhost:5173', // Default Vite port for frontend
+    origin: ['http://localhost:5173', 'http://localhost:5174'], // Frontends (user and admin)
     credentials: true
 }));
 app.use(session({
@@ -100,6 +100,8 @@ app.use(express.static(path.join(__dirname, '../src/infrastructure/http/public')
 app.use(require('../src/infrastructure/http/router/tienda.api.router'));
 app.use(require('../src/infrastructure/http/router/cliente.api.router'));
 app.use(require('../src/infrastructure/http/router/auth.api.router'));
+app.use(require('../src/infrastructure/http/router/forma_pago.api.router')); // Payment methods API
+app.use(require('../src/infrastructure/http/router/factura.api.router')); // Invoice API
 
 // Optional: Keep some basic routes for API health check
 app.get('/api/health', (req, res) => {

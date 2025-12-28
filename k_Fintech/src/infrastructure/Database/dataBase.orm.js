@@ -60,28 +60,28 @@ const detalle_total = detalleTotalModel(sequelize, Sequelize)
 
 
 //relacion tienda-dueño
-dueño.hasMany(tienda)
-tienda.belongsTo(dueño)
+dueño.hasMany(tienda, { foreignKey: 'idDueño' })
+tienda.belongsTo(dueño, { foreignKey: 'idDueño' })
 
 //relacion tienda-factura
-tienda.hasMany(factura)
-factura.belongsTo(tienda)
+tienda.hasMany(factura, { foreignKey: 'idTienda' })
+factura.belongsTo(tienda, { foreignKey: 'idTienda' })
 
 //relacion factura-cliente
-cliente.hasMany(factura)
-factura.belongsTo(cliente)
+cliente.hasMany(factura, { foreignKey: 'idCliente' })
+factura.belongsTo(cliente, { foreignKey: 'idCliente' })
 
 //relacion factura-forma_pago
-forma_pago.hasMany(factura)
-factura.belongsTo(forma_pago)
+forma_pago.hasMany(factura, { foreignKey: 'idFormaPago' })
+factura.belongsTo(forma_pago, { foreignKey: 'idFormaPago' })
 
 //relacion factura-detalle_factura
-detalle_factura.hasMany(factura)
-factura.belongsTo(detalle_factura)
+detalle_factura.hasMany(factura, { foreignKey: 'idFactura' })
+factura.belongsTo(detalle_factura, { foreignKey: 'idFactura' })
 
 //relacion factura-detalle_total
-detalle_total.hasMany(factura)
-factura.belongsTo(detalle_total)
+detalle_total.hasMany(factura, { foreignKey: 'idFactura' })
+factura.belongsTo(detalle_total, { foreignKey: 'idFactura' })
 
 module.exports = {
 	dueño,

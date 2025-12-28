@@ -3,7 +3,12 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+
+# Production builds
+/dist
+/build
+/.next
+/out
 
 # Environment variables
 .env
@@ -12,13 +17,12 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# Build outputs
-dist/
-build/
-.next/
-nuxt/
-.nuxt/
-output/
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -28,61 +32,33 @@ output/
 .Trashes
 ehthumbs.db
 Thumbs.db
-desktop.ini
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
 
 # Logs
-logs/
+logs
 *.log
 
 # Runtime data
-pids/
+pids
 *.pid
 *.seed
 *.pid.lock
 
 # Coverage directory used by tools like istanbul
 coverage/
-.nyc_output/
+*.lcov
 
 # Temporary folders
 tmp/
 temp/
 
-# Backend node_modules
-k_Fintech/node_modules/
-K_Fintech_Admin/node_modules/
-K_Fintech_front/node_modules/
-
-# Backend build
-k_Fintech/dist/
-
-# Frontend build
-K_Fintech_Admin/dist/
-K_Fintech_Admin/build/
-K_Fintech_front/dist/
-K_Fintech_front/build/
-
-# System files
-.DS_Store
-Thumbs.db
-
-# Database files
+# Database
 *.db
 *.db-journal
 
-# IDE and editor files
-.vs/
-*.sublime-project
-*.sublime-workspace
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+# Build outputs
+*.min.js
+*.bundle.js
+
+# System Files
+.DS_Store
+Thumbs.db

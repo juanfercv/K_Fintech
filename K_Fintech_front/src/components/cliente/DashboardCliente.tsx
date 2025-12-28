@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { tiendaService, clienteService } from '../../services/api';
 
-interface Factura {
-  id: number;
-  total: number;
-  estado: 'Pagada' | 'Pendiente' | 'Anulada';
-  cliente: string;
-  metodoPago: string;
-  fecha: string;
-}
-
-const Dashboard: React.FC = () => {
+const DashboardCliente: React.FC = () => {
   const [stats, setStats] = useState({
     totalFacturado: 0,
     facturasPorEstado: { Pagada: 0, Pendiente: 0, Anulada: 0 },
@@ -48,12 +38,12 @@ const Dashboard: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="dashboard-container">Cargando dashboard...</div>;
+    return <div className="dashboard-cliente-container">Cargando dashboard...</div>;
   }
 
   return (
-    <div className="dashboard-container">
-      <h2>Panel de Administración</h2>
+    <div className="dashboard-cliente-container">
+      <h2>Panel de Cliente</h2>
       
       <div className="dashboard-stats">
         <div className="stat-card">
@@ -120,4 +110,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default DashboardCliente;

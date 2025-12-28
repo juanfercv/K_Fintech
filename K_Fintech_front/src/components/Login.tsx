@@ -1,22 +1,38 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    correo_electronico_Dueño: '',
+    password_Dueño: ''
+  });
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setLoading(true);
+    setError('');
+
     try {
-      await login(email, password);
-      navigate('/'); // Redirigir al home después del login
-    } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      await login(formData.correo_electronico_Dueño, formData.password_Dueño);
+      // Redirigir al dashboard principal después del inicio de sesión exitoso
+      navigate('/');
+    } catch (error) {
+      setError('Credenciales incorrectas. Por favor, intenta de nuevo.');
+      console.error('Error en el inicio de sesión:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,32 +43,36 @@ const Login: React.FC = () => {
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Correo Electrónico:</label>
+            <label htmlFor="correo_electronico_Dueño">Correo Electrónico:</label>
             <input
               type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="correo_electronico_Dueño"
+              name="correo_electronico_Dueño"
+              value={formData.correo_electronico_Dueño}
+              onChange={handleChange}
               required
             />
           </div>
+          
           <div className="form-group">
-            <label htmlFor="password">Contraseña:</label>
+            <label htmlFor="password_Dueño">Contraseña:</label>
             <input
               type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              id="password_Dueño"
+              name="password_Dueño"
+              value={formData.password_Dueño}
+              onChange={handleChange}
               required
             />
           </div>
-          <button type="submit" className="btn btn-primary">
-            Iniciar Sesión
+          
+          <button type="submit" className="btn btn-primary" disabled={loading}>
+            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
-        <div className="auth-links">
-          <p>¿No tienes una cuenta? <a href="/register">Regístrate aquí</a></p>
-        </div>
+        <p className="auth-link">
+          ¿No tienes una cuenta? <Link to="/register">Regístrate aquí</Link>
+        </p>
       </div>
     </div>
   );

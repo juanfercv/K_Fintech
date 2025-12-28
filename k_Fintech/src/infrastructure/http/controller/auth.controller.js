@@ -52,7 +52,7 @@ authController.register = async (req, res) => {
 
 authController.login = async (req, res, next) => {
     try {
-        passport.authenticate('local', (err, user, info) => {
+        passport.authenticate('local.signin', (err, user, info) => {
             if (err) {
                 return res.status(500).json({ 
                     message: 'Error de autenticación',

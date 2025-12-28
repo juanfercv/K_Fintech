@@ -4,14 +4,23 @@ import Tiendas from './components/Tiendas';
 import Clientes from './components/Clientes';
 import Login from './components/Login';
 import Register from './components/Register';
-import Dashboard from './components/admin/Dashboard';
-import MetodosPago from './components/admin/MetodosPago';
-import TiendaAdmin from './components/admin/TiendaAdmin';
+import MetodosPagoCliente from './components/cliente/MetodosPagoCliente';
+import TiendaCliente from './components/cliente/TiendaCliente';
+import DashboardCliente from './components/cliente/DashboardCliente';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+// Tipos para las rutas protegidas
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+interface PublicRouteProps {
+  children: React.ReactNode;
+}
+
 // Componente para rutas protegidas
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -22,7 +31,7 @@ const ProtectedRoute = ({ children }) => {
 };
 
 // Componente para rutas públicas (redirige si ya está autenticado)
-const PublicRoute = ({ children }) => {
+const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
   
   if (loading) {
@@ -80,13 +89,6 @@ function Home() {
             Clientes
           </Link>
           <Link 
-            className={activeComponent === 'dashboard' ? 'active' : ''} 
-            onClick={() => setActiveComponent('dashboard')}
-            to="/dashboard"
-          >
-            Dashboard
-          </Link>
-          <Link 
             className={activeComponent === 'metodos-pago' ? 'active' : ''} 
             onClick={() => setActiveComponent('metodos-pago')}
             to="/metodos-pago"
@@ -94,11 +96,18 @@ function Home() {
             Métodos de Pago
           </Link>
           <Link 
-            className={activeComponent === 'tienda-admin' ? 'active' : ''} 
-            onClick={() => setActiveComponent('tienda-admin')}
-            to="/tienda-admin"
+            className={activeComponent === 'tienda-cliente' ? 'active' : ''} 
+            onClick={() => setActiveComponent('tienda-cliente')}
+            to="/tienda-cliente"
           >
-            Administrar Tiendas
+            Información de Tienda
+          </Link>
+          <Link 
+            className={activeComponent === 'dashboard-cliente' ? 'active' : ''} 
+            onClick={() => setActiveComponent('dashboard-cliente')}
+            to="/dashboard-cliente"
+          >
+            Dashboard
           </Link>
         </nav>
       </header>
@@ -108,12 +117,36 @@ function Home() {
           <div className="home">
             <h2>Bienvenido al Sistema de Gestión</h2>
             <p>Selecciona una opción del menú para comenzar a gestionar tus tiendas o clientes.</p>
+            <div className="quick-actions">
+              <Link to="/tiendas" className="quick-action-card">
+                <h3>Administrar Tiendas</h3>
+                <p>Gestiona la información de tus tiendas</p>
+              </Link>
+              <Link to="/clientes" className="quick-action-card">
+                <h3>Administrar Clientes</h3>
+                <p>Gestiona la información de tus clientes</p>
+              </Link>
+              <Link to="/metodos-pago" className="quick-action-card">
+                <h3>Métodos de Pago</h3>
+                <p>Ver y seleccionar métodos de pago</p>
+              </Link>
+              <Link to="/dashboard-cliente" className="quick-action-card">
+                <h3>Dashboard</h3>
+                <p>Ver estadísticas y resumen general</p>
+              </Link>
+            </div>
           </div>
         )}
         
         {activeComponent === 'tiendas' && <Tiendas />}
         
         {activeComponent === 'clientes' && <Clientes />}
+        
+        {activeComponent === 'metodos-pago' && <MetodosPagoCliente />}
+        
+        {activeComponent === 'tienda-cliente' && <TiendaCliente />}
+        
+        {activeComponent === 'dashboard-cliente' && <DashboardCliente />}
       </main>
     </div>
   );
@@ -154,19 +187,19 @@ function App() {
               <Clientes />
             </ProtectedRoute>
           } />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
           <Route path="/metodos-pago" element={
             <ProtectedRoute>
-              <MetodosPago />
+              <MetodosPagoCliente />
             </ProtectedRoute>
           } />
-          <Route path="/tienda-admin" element={
+          <Route path="/tienda-cliente" element={
             <ProtectedRoute>
-              <TiendaAdmin />
+              <TiendaCliente />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard-cliente" element={
+            <ProtectedRoute>
+              <DashboardCliente />
             </ProtectedRoute>
           } />
         </Routes>
