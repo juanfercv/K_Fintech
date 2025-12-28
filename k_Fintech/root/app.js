@@ -12,6 +12,7 @@ const multer = require('multer');
 const fs = require('fs');
 const mysql = require('mysql')
 const myconnection = require('express-myconnection')
+const cors = require('cors');
 const tiendaRoutes = require('../src/infrastructure/http/router/tienda.router')
 
 const { MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE, MYSQLPORT } = require("../src/config/keys");
@@ -64,6 +65,10 @@ app.use(bodyparser.urlencoded({
 }));
 
 app.use(bodyparser.json());
+app.use(cors({
+    origin: 'http://localhost:5173', // Default Vite port for frontend
+    credentials: true
+}));
 app.use(session({
     key: 'session_cookie_name',
     secret: 'session_cookie_secret',
@@ -91,14 +96,24 @@ app.use(express.static(path.join(__dirname, '../src/infrastructure/http/public')
 
 //routers
 
-//rutas principales
-app.use(require("../src/infrastructure/http/router/registro.rutas"))
-app.use(require('../src/infrastructure/http/router/index.rutas'))
-app.use(require('../src/infrastructure/http/router/principal.router'))
-//Registro de la tienda
-app.use('/tienda', require('../src/infrastructure/http/router/tienda.router'))
-// app.use('/factura', require('./router/factura.router'))
-app.use(require('../src/infrastructure/http/router/factura.router'))
+// API routes for frontend
+app.use(require('../src/infrastructure/http/router/tienda.api.router'));
+app.use(require('../src/infrastructure/http/router/cliente.api.router'));
+app.use(require('../src/infrastructure/http/router/auth.api.router'));
+
+// Optional: Keep some basic routes for API health check
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'OK', message: 'API is running' });
+});
+
+// For any other routes, return a simple message or redirect
+app.get('*', (req, res) => {
+    res.json({ 
+        message: 'Welcome to the K_Fintech API', 
+        endpoints: ['/api/tiendas', '/api/clientes', '/api/auth'] 
+    });
+});
+
 // app.get('/factura', (req, res) => {
 //     res.render('factura/factura');
 // })

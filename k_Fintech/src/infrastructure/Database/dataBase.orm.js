@@ -35,6 +35,9 @@ sequelize.authenticate()
 sequelize.sync({ force: false })
 	.then(() => {
 		console.log("tablas sincronizadas");
+	})
+	.catch((err) => {
+		console.log("error al sincronizar tablas: ", err.message);
 	});
 
 	const tiendaModel = require('../../domain/models/tienda');

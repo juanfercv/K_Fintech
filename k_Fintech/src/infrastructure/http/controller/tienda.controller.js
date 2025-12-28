@@ -6,6 +6,91 @@ const { Path } = require('path');
 const orm = require('../../Database/dataBase.orm');
 const sql = require('../../Database/dataBase.sql');
 
+// API methods for frontend
+tiendaCTl.listarTiendas = async (req, res) => {
+    try {
+        const tiendas = await sql.query('select * from tiendas');
+        res.json(tiendas);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+tiendaCTl.obtenerTienda = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const tienda = await sql.query('select * from tiendas where idTienda = ?', [id]);
+        if (tienda.length > 0) {
+            res.json(tienda[0]);
+        } else {
+            res.status(404).json({ message: 'Tienda no encontrada' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+tiendaCTl.crearTienda = async (req, res) => {
+    try {
+        const { fotoTienda, nombreTienda, dueñoTienda, RUCTienda, dirección_matriz_tienda, direccion_sucursal_tienda, correo_electronico_tienda, telefono } = req.body;
+        const nuevaTienda = {
+            fotoTienda,
+            nombreTienda,
+            dueñoTienda,
+            RUCTienda,
+            dirección_matriz_tienda,
+            direccion_sucursal_tienda,
+            correo_electronico_tienda,
+            telefono
+        };
+        const resultado = await orm.tienda.create(nuevaTienda);
+        res.status(201).json(resultado);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+tiendaCTl.actualizarTienda = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { fotoTienda, nombreTienda, dueñoTienda, RUCTienda, dirección_matriz_tienda, direccion_sucursal_tienda, correo_electronico_tienda, telefono } = req.body;
+        const tiendaActualizada = {
+            fotoTienda,
+            nombreTienda,
+            dueñoTienda,
+            RUCTienda,
+            dirección_matriz_tienda,
+            direccion_sucursal_tienda,
+            correo_electronico_tienda,
+            telefono
+        };
+        const tienda = await orm.tienda.findOne({ where: { idTienda: id } });
+        if (tienda) {
+            await tienda.update(tiendaActualizada);
+            res.json(tienda);
+        } else {
+            res.status(404).json({ message: 'Tienda no encontrada' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+tiendaCTl.eliminarTienda = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const resultado = await orm.tienda.destroy({ where: { idTienda: id } });
+        if (resultado) {
+            res.json({ message: 'Tienda eliminada exitosamente' });
+        } else {
+            res.status(404).json({ message: 'Tienda no encontrada' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Existing view methods
 tiendaCTl.mostrar = (req, res) => {
     res.render('tienda/agregar');
 }
