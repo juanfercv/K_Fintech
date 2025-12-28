@@ -1,0 +1,14 @@
+node_modules
+dist
+.vite
+.env
+.env.local
+.env.*.local
+coverage
+.nyc_output
+npm-debug.log*
+.yarn
+.pnp.*
+.DS_Store
+logs
+*.log
