@@ -4,9 +4,13 @@ import Tiendas from './components/Tiendas';
 import Clientes from './components/Clientes';
 import Login from './components/Login';
 import Register from './components/Register';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Dashboard from './components/admin/Dashboard';
+import MetodosPago from './components/admin/MetodosPago';
+import TiendaAdmin from './components/admin/TiendaAdmin';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+// Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
@@ -17,6 +21,7 @@ const ProtectedRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" replace />;
 };
 
+// Componente para rutas públicas (redirige si ya está autenticado)
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   
@@ -27,6 +32,7 @@ const PublicRoute = ({ children }) => {
   return !user ? children : <Navigate to="/" replace />;
 };
 
+// Componente Home actualizado
 function Home() {
   const [activeComponent, setActiveComponent] = useState('home');
   const { user, logout } = useAuth();
@@ -52,24 +58,48 @@ function Home() {
           </div>
         )}
         <nav className="nav">
-          <button 
+          <Link 
             className={activeComponent === 'home' ? 'active' : ''} 
             onClick={() => setActiveComponent('home')}
+            to="/"
           >
             Inicio
-          </button>
-          <button 
+          </Link>
+          <Link 
             className={activeComponent === 'tiendas' ? 'active' : ''} 
             onClick={() => setActiveComponent('tiendas')}
+            to="/tiendas"
           >
             Tiendas
-          </button>
-          <button 
+          </Link>
+          <Link 
             className={activeComponent === 'clientes' ? 'active' : ''} 
             onClick={() => setActiveComponent('clientes')}
+            to="/clientes"
           >
             Clientes
-          </button>
+          </Link>
+          <Link 
+            className={activeComponent === 'dashboard' ? 'active' : ''} 
+            onClick={() => setActiveComponent('dashboard')}
+            to="/dashboard"
+          >
+            Dashboard
+          </Link>
+          <Link 
+            className={activeComponent === 'metodos-pago' ? 'active' : ''} 
+            onClick={() => setActiveComponent('metodos-pago')}
+            to="/metodos-pago"
+          >
+            Métodos de Pago
+          </Link>
+          <Link 
+            className={activeComponent === 'tienda-admin' ? 'active' : ''} 
+            onClick={() => setActiveComponent('tienda-admin')}
+            to="/tienda-admin"
+          >
+            Administrar Tiendas
+          </Link>
         </nav>
       </header>
       
@@ -94,18 +124,21 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Ruta pública para login */}
           <Route path="/login" element={
             <PublicRoute>
               <Login />
             </PublicRoute>
           } />
           
+          {/* Ruta pública para registro */}
           <Route path="/register" element={
             <PublicRoute>
               <Register />
             </PublicRoute>
           } />
           
+          {/* Rutas protegidas */}
           <Route path="/" element={
             <ProtectedRoute>
               <Home />
@@ -119,6 +152,21 @@ function App() {
           <Route path="/clientes" element={
             <ProtectedRoute>
               <Clientes />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/metodos-pago" element={
+            <ProtectedRoute>
+              <MetodosPago />
+            </ProtectedRoute>
+          } />
+          <Route path="/tienda-admin" element={
+            <ProtectedRoute>
+              <TiendaAdmin />
             </ProtectedRoute>
           } />
         </Routes>
