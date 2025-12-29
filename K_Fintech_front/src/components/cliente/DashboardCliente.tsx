@@ -1,109 +1,124 @@
 import React, { useState, useEffect } from 'react';
 
+interface EstadoFactura {
+  estado: string;
+  count: number;
+}
+
 const DashboardCliente: React.FC = () => {
-  const [stats, setStats] = useState({
+  const [estadisticas, setEstadisticas] = useState({
     totalFacturado: 0,
-    facturasPorEstado: { Pagada: 0, Pendiente: 0, Anulada: 0 },
-    topClientes: [] as { nombre: string; total: number }[],
-    metodosPago: [] as { metodo: string; uso: number }[],
+    facturasPagadas: 0,
+    facturasPendientes: 0,
+    facturasAnuladas: 0,
+    topCliente: "",
+    metodoMasUsado: ""
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    cargarDatosDashboard();
+    cargarEstadisticas();
   }, []);
 
-  const cargarDatosDashboard = async () => {
+  const cargarEstadisticas = async () => {
     try {
-      // Simular datos del dashboard - en la implementación real, estos vendrían de la API
-      setStats({
-        totalFacturado: 12500.50,
-        facturasPorEstado: { Pagada: 24, Pendiente: 8, Anulada: 2 },
-        topClientes: [
-          { nombre: 'Juan Pérez', total: 3200 },
-          { nombre: 'María García', total: 2800 },
-          { nombre: 'Carlos López', total: 2100 },
-        ],
-        metodosPago: [
-          { metodo: 'Efectivo', uso: 45 },
-          { metodo: 'Tarjeta de Débito', uso: 30 },
-          { metodo: 'Tarjeta de Crédito', uso: 25 },
-        ],
+      setLoading(true);
+      // Hacer la llamada al nuevo endpoint de estadísticas
+      const response = await fetch('http://localhost:4200/api/dashboard/cliente');
+      const data = await response.json();
+      
+      // Procesar los datos recibidos
+      let facturasPagadas = 0;
+      let facturasPendientes = 0;
+      let facturasAnuladas = 0;
+      
+      (data.facturasPorEstado as EstadoFactura[])?.forEach((estado) => {
+        if (estado.estado === 'Pagada') facturasPagadas = estado.count;
+        if (estado.estado === 'Pendiente') facturasPendientes = estado.count;
+        if (estado.estado === 'Anulada') facturasAnuladas = estado.count;
       });
-    } catch (error) {
-      console.error('Error al cargar datos del dashboard:', error);
+      
+      const topClienteNombre = data.topClientes && data.topClientes[0] ? data.topClientes[0].nombre_cliente : 'N/A';
+      const metodoMasUsadoNombre = data.metodosPagoMasUsados && data.metodosPagoMasUsados[0] ? data.metodosPagoMasUsados[0].nombre : 'N/A';
+      
+      setEstadisticas({
+        totalFacturado: data.totalFacturado,
+        facturasPagadas,
+        facturasPendientes,
+        facturasAnuladas,
+        topCliente: topClienteNombre,
+        metodoMasUsado: metodoMasUsadoNombre
+      });
+    } catch (err) {
+      setError('Error al cargar las estadísticas');
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="dashboard-cliente-container">Cargando dashboard...</div>;
+    return <div className="dashboard-cliente-container">Cargando estadísticas...</div>;
+  }
+
+  if (error) {
+    return <div className="dashboard-cliente-container">{error}</div>;
   }
 
   return (
     <div className="dashboard-cliente-container">
-      <h2>Panel de Cliente</h2>
+      <h2>Dashboard Cliente</h2>
       
-      <div className="dashboard-stats">
-        <div className="stat-card">
+      <div className="estadisticas-container">
+        <div className="estadistica-card">
           <h3>Total Facturado</h3>
-          <p className="stat-value">${stats.totalFacturado.toLocaleString('es-ES')}</p>
+          <p className="valor-destacado">${estadisticas.totalFacturado.toFixed(2)}</p>
         </div>
         
-        <div className="stat-card">
-          <h3>Facturas por Estado</h3>
-          <div className="estado-stats">
-            <div className="estado-item">
-              <span>Pagadas:</span>
-              <span className="estado-count">{stats.facturasPorEstado.Pagada}</span>
-            </div>
-            <div className="estado-item">
-              <span>Pendientes:</span>
-              <span className="estado-count">{stats.facturasPorEstado.Pendiente}</span>
-            </div>
-            <div className="estado-item">
-              <span>Anuladas:</span>
-              <span className="estado-count">{stats.facturasPorEstado.Anulada}</span>
-            </div>
-          </div>
+        <div className="estadistica-card">
+          <h3>Facturas Pagadas</h3>
+          <p className="valor-destacado">{estadisticas.facturasPagadas}</p>
+        </div>
+        
+        <div className="estadistica-card">
+          <h3>Facturas Pendientes</h3>
+          <p className="valor-destacado">{estadisticas.facturasPendientes}</p>
+        </div>
+        
+        <div className="estadistica-card">
+          <h3>Facturas Anuladas</h3>
+          <p className="valor-destacado">{estadisticas.facturasAnuladas}</p>
         </div>
       </div>
       
-      <div className="dashboard-charts">
-        <div className="chart-card">
-          <h3>Top Clientes</h3>
-          <div className="top-clientes-list">
-            {stats.topClientes.map((cliente, index) => (
-              <div key={index} className="cliente-item">
-                <span className="cliente-rank">#{index + 1}</span>
-                <span className="cliente-nombre">{cliente.nombre}</span>
-                <span className="cliente-total">${cliente.total.toLocaleString('es-ES')}</span>
-              </div>
-            ))}
-          </div>
+      <div className="informacion-adicional">
+        <div className="info-card">
+          <h3>Top Cliente</h3>
+          <p>{estadisticas.topCliente}</p>
         </div>
         
-        <div className="chart-card">
-          <h3>Métodos de Pago Más Usados</h3>
-          <div className="metodos-pago-list">
-            {stats.metodosPago.map((metodo, index) => (
-              <div key={index} className="metodo-item">
-                <span className="metodo-nombre">{metodo.metodo}</span>
-                <span className="metodo-uso">{metodo.uso}%</span>
-              </div>
-            ))}
-          </div>
+        <div className="info-card">
+          <h3>Método de Pago Más Usado</h3>
+          <p>{estadisticas.metodoMasUsado}</p>
         </div>
       </div>
       
-      <div className="dashboard-actions">
+      <div className="atajos-container">
         <h3>Acciones Rápidas</h3>
-        <div className="action-buttons">
-          <button className="btn btn-primary">Crear Nueva Factura</button>
-          <button className="btn btn-secondary">Ver Listado de Facturas</button>
-          <button className="btn btn-secondary">Ver Clientes</button>
-          <button className="btn btn-secondary">Ver Tiendas</button>
+        <div className="atajos-grid">
+          <button className="atajo-btn">
+            Ver Mis Facturas
+          </button>
+          <button className="atajo-btn">
+            Nueva Factura
+          </button>
+          <button className="atajo-btn">
+            Ver Métodos de Pago
+          </button>
+          <button className="atajo-btn">
+            Ver Datos de Tienda
+          </button>
         </div>
       </div>
     </div>

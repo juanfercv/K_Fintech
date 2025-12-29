@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { tiendaService, Tienda } from '../services/api';
+import { tiendaService } from '../services/api';
+
+interface Tienda {
+  idTienda: number;
+  fotoTienda: string;
+  nombreTienda: string;
+  dueñoTienda: string;
+  RUCTienda: string;
+  dirección_matriz_tienda: string;
+  direccion_sucursal_tienda: string;
+  correo_electronico_tienda: string;
+  telefono: string;
+}
 
 const Tiendas: React.FC = () => {
   const [tiendas, setTiendas] = useState<Tienda[]>([]);

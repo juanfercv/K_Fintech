@@ -22,12 +22,13 @@ html, body {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-attachment: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .app {
@@ -36,8 +37,7 @@ body {
   height: auto;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background-attachment: fixed;
+  background: transparent;
 }
 
 .app-header {
@@ -120,7 +120,6 @@ body {
   padding: 2rem 1rem;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
   min-height: calc(100vh - 220px);
   width: 100%;
   box-sizing: border-box;
@@ -136,6 +135,7 @@ body {
   background-attachment: fixed;
   width: 100%;
   box-sizing: border-box;
+  overflow: auto;
 }
 
 .auth-form {
@@ -329,6 +329,7 @@ body {
   color: white;
   box-sizing: border-box;
   overflow-x: auto;
+  margin: 0 auto;
 }
 
 .tienda-card, .cliente-card {
@@ -371,6 +372,7 @@ body {
   color: white;
   box-sizing: border-box;
   overflow-x: auto;
+  margin: 0 auto;
 }
 
 .metodo-pago-card {
@@ -442,6 +444,7 @@ body {
   color: white;
   box-sizing: border-box;
   overflow-x: auto;
+  margin: 0 auto;
 }
 
 .tienda-detalle {
@@ -486,6 +489,7 @@ body {
   color: white;
   box-sizing: border-box;
   overflow-x: auto;
+  margin: 0 auto;
 }
 
 .stats-grid {

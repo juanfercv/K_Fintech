@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import './App.css';
 import Tiendas from './components/Tiendas';
 import Clientes from './components/Clientes';
@@ -7,7 +7,7 @@ import Register from './components/Register';
 import MetodosPagoCliente from './components/cliente/MetodosPagoCliente';
 import TiendaCliente from './components/cliente/TiendaCliente';
 import DashboardCliente from './components/cliente/DashboardCliente';
-import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Tipos para las rutas protegidas
@@ -22,29 +22,29 @@ interface PublicRouteProps {
 // Componente para rutas protegidas
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <div>Cargando...</div>;
   }
-  
+
   return user ? children : <Navigate to="/login" replace />;
 };
 
 // Componente para rutas públicas (redirige si ya está autenticado)
 const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return <div>Cargando...</div>;
   }
-  
+
   return !user ? children : <Navigate to="/" replace />;
 };
 
-// Componente Home actualizado
-function Home() {
-  const [activeComponent, setActiveComponent] = useState('home');
+// Componente de navegación
+const Navigation: React.FC = () => {
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -54,8 +54,18 @@ function Home() {
     }
   };
 
+  // Definir las rutas protegidas para mostrar en el menú
+  const menuItems = [
+    { path: '/', label: 'Inicio', showInMenu: true },
+    { path: '/tiendas', label: 'Tiendas', showInMenu: true },
+    { path: '/clientes', label: 'Clientes', showInMenu: true },
+    { path: '/metodos-pago', label: 'Métodos de Pago', showInMenu: true },
+    { path: '/tienda-cliente', label: 'Información de Tienda', showInMenu: true },
+    { path: '/dashboard-cliente', label: 'Dashboard', showInMenu: true },
+  ];
+
   return (
-    <div className="app">
+    <>
       <header className="app-header">
         <h1>Sistema de Gestión</h1>
         {user && (
@@ -66,145 +76,110 @@ function Home() {
             </button>
           </div>
         )}
-        <nav className="nav">
-          <Link 
-            className={activeComponent === 'home' ? 'active' : ''} 
-            onClick={() => setActiveComponent('home')}
-            to="/"
-          >
-            Inicio
-          </Link>
-          <Link 
-            className={activeComponent === 'tiendas' ? 'active' : ''} 
-            onClick={() => setActiveComponent('tiendas')}
-            to="/tiendas"
-          >
-            Tiendas
-          </Link>
-          <Link 
-            className={activeComponent === 'clientes' ? 'active' : ''} 
-            onClick={() => setActiveComponent('clientes')}
-            to="/clientes"
-          >
-            Clientes
-          </Link>
-          <Link 
-            className={activeComponent === 'metodos-pago' ? 'active' : ''} 
-            onClick={() => setActiveComponent('metodos-pago')}
-            to="/metodos-pago"
-          >
-            Métodos de Pago
-          </Link>
-          <Link 
-            className={activeComponent === 'tienda-cliente' ? 'active' : ''} 
-            onClick={() => setActiveComponent('tienda-cliente')}
-            to="/tienda-cliente"
-          >
-            Información de Tienda
-          </Link>
-          <Link 
-            className={activeComponent === 'dashboard-cliente' ? 'active' : ''} 
-            onClick={() => setActiveComponent('dashboard-cliente')}
-            to="/dashboard-cliente"
-          >
-            Dashboard
-          </Link>
-        </nav>
-      </header>
-      
-      <main className="app-main">
-        {activeComponent === 'home' && (
-          <div className="home">
-            <h2>Bienvenido al Sistema de Gestión</h2>
-            <p>Selecciona una opción del menú para comenzar a gestionar tus tiendas o clientes.</p>
-            <div className="quick-actions">
-              <Link to="/tiendas" className="quick-action-card">
-                <h3>Administrar Tiendas</h3>
-                <p>Gestiona la información de tus tiendas</p>
+        {user && (
+          <nav className="nav">
+            {menuItems.map((item) => (
+              <Link
+                key={item.path}
+                className={location.pathname === item.path ? 'active' : ''}
+                to={item.path}
+              >
+                {item.label}
               </Link>
-              <Link to="/clientes" className="quick-action-card">
-                <h3>Administrar Clientes</h3>
-                <p>Gestiona la información de tus clientes</p>
-              </Link>
-              <Link to="/metodos-pago" className="quick-action-card">
-                <h3>Métodos de Pago</h3>
-                <p>Ver y seleccionar métodos de pago</p>
-              </Link>
-              <Link to="/dashboard-cliente" className="quick-action-card">
-                <h3>Dashboard</h3>
-                <p>Ver estadísticas y resumen general</p>
-              </Link>
-            </div>
-          </div>
+            ))}
+          </nav>
         )}
-        
-        {activeComponent === 'tiendas' && <Tiendas />}
-        
-        {activeComponent === 'clientes' && <Clientes />}
-        
-        {activeComponent === 'metodos-pago' && <MetodosPagoCliente />}
-        
-        {activeComponent === 'tienda-cliente' && <TiendaCliente />}
-        
-        {activeComponent === 'dashboard-cliente' && <DashboardCliente />}
-      </main>
-    </div>
+      </header>
+    </>
   );
-}
+};
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Ruta pública para login */}
-          <Route path="/login" element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } />
-          
-          {/* Ruta pública para registro */}
-          <Route path="/register" element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } />
-          
-          {/* Rutas protegidas */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } />
-          <Route path="/tiendas" element={
-            <ProtectedRoute>
-              <Tiendas />
-            </ProtectedRoute>
-          } />
-          <Route path="/clientes" element={
-            <ProtectedRoute>
-              <Clientes />
-            </ProtectedRoute>
-          } />
-          <Route path="/metodos-pago" element={
-            <ProtectedRoute>
-              <MetodosPagoCliente />
-            </ProtectedRoute>
-          } />
-          <Route path="/tienda-cliente" element={
-            <ProtectedRoute>
-              <TiendaCliente />
-            </ProtectedRoute>
-          } />
-          <Route path="/dashboard-cliente" element={
-            <ProtectedRoute>
-              <DashboardCliente />
-            </ProtectedRoute>
-          } />
-        </Routes>
+        <div className="app">
+          <Navigation />
+          <main className="app-main">
+            <Routes>
+              {/* Ruta pública para login */}
+              <Route path="/login" element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } />
+              
+              {/* Ruta pública para registro */}
+              <Route path="/register" element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              } />
+              
+              {/* Rutas protegidas */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
+              <Route path="/tiendas" element={
+                <ProtectedRoute>
+                  <Tiendas />
+                </ProtectedRoute>
+              } />
+              <Route path="/clientes" element={
+                <ProtectedRoute>
+                  <Clientes />
+                </ProtectedRoute>
+              } />
+              <Route path="/metodos-pago" element={
+                <ProtectedRoute>
+                  <MetodosPagoCliente />
+                </ProtectedRoute>
+              } />
+              <Route path="/tienda-cliente" element={
+                <ProtectedRoute>
+                  <TiendaCliente />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard-cliente" element={
+                <ProtectedRoute>
+                  <DashboardCliente />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </main>
+        </div>
       </Router>
     </AuthProvider>
+  );
+}
+
+// Componente Home actualizado
+function Home() {
+  return (
+    <div className="home">
+      <h2>Bienvenido al Sistema de Gestión</h2>
+      <p>Selecciona una opción del menú para comenzar a gestionar tus tiendas o clientes.</p>
+      <div className="quick-actions">
+        <Link to="/tiendas" className="quick-action-card">
+          <h3>Administrar Tiendas</h3>
+          <p>Gestiona la información de tus tiendas</p>
+        </Link>
+        <Link to="/clientes" className="quick-action-card">
+          <h3>Administrar Clientes</h3>
+          <p>Gestiona la información de tus clientes</p>
+        </Link>
+        <Link to="/metodos-pago" className="quick-action-card">
+          <h3>Métodos de Pago</h3>
+          <p>Ver y seleccionar métodos de pago</p>
+        </Link>
+        <Link to="/dashboard-cliente" className="quick-action-card">
+          <h3>Dashboard</h3>
+          <p>Ver estadísticas y resumen general</p>
+        </Link>
+      </div>
+    </div>
   );
 }
 

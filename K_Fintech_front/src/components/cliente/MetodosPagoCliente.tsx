@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMetodoPagoViewModel } from '../../presentation/viewmodels/MetodoPagoViewModel';
 
 const MetodosPagoCliente: React.FC = () => {
   const { metodos, loading, error } = useMetodoPagoViewModel();
+  const [metodosSeleccionados, setMetodosSeleccionados] = useState<number[]>([]);
 
   if (loading) {
     return <div>Cargando métodos de pago...</div>;
@@ -11,6 +12,19 @@ const MetodosPagoCliente: React.FC = () => {
   if (error) {
     return <div>{error}</div>;
   }
+
+  const handleSeleccionMetodo = (id: number, checked: boolean) => {
+    if (checked) {
+      setMetodosSeleccionados([...metodosSeleccionados, id]);
+    } else {
+      setMetodosSeleccionados(metodosSeleccionados.filter(metodoId => metodoId !== id));
+    }
+  };
+
+  const handleGuardarSeleccion = () => {
+    console.log('Métodos seleccionados:', metodosSeleccionados);
+    alert(`Ha seleccionado ${metodosSeleccionados.length} método(s) de pago`);
+  };
 
   return (
     <div className="metodos-pago-cliente-container">
@@ -44,13 +58,17 @@ const MetodosPagoCliente: React.FC = () => {
                 id={`metodo-${metodo.id}`} 
                 name="metodos" 
                 value={metodo.id}
+                checked={metodosSeleccionados.includes(metodo.id)}
+                onChange={(e) => handleSeleccionMetodo(metodo.id, e.target.checked)}
               />
               <label htmlFor={`metodo-${metodo.id}`}>{metodo.nombre}</label>
             </div>
           ))}
         </div>
         
-        <button className="btn btn-primary">Guardar Selección</button>
+        <button className="btn btn-primary" onClick={handleGuardarSeleccion}>
+          Guardar Selección
+        </button>
       </div>
     </div>
   );

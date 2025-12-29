@@ -32,7 +32,7 @@ sequelize.authenticate()
 		console.log("no se conecto");
 	});
 
-sequelize.sync({ force: false })
+sequelize.sync({ force: false, alter: true })
 	.then(() => {
 		console.log("tablas sincronizadas");
 	})

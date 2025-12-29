@@ -57,6 +57,11 @@ export const clienteService = {
   delete: (id) => apiRequest(`/api/clientes/${id}`, { method: 'DELETE' }),
 };
 
+export default {
+  tiendaService,
+  clienteService,
+};
+
 // MetodoPago API functions
 export const metodoPagoService = {
   getAll: () => apiRequest('/api/formas_pago'),
@@ -65,10 +70,4 @@ export const metodoPagoService = {
   create: (data) => apiRequest('/api/formas_pago', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiRequest(`/api/formas_pago/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => apiRequest(`/api/formas_pago/${id}`, { method: 'DELETE' }),
-};
-
-export default {
-  tiendaService,
-  clienteService,
-  metodoPagoService,
 };

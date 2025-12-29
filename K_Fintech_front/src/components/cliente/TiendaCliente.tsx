@@ -1,68 +1,94 @@
-import React from 'react';
-import { useTiendaViewModel } from '../../presentation/viewmodels/TiendaViewModel';
+import React, { useState, useEffect } from 'react';
+import { tiendaService } from '../../services/api';
+
+interface Tienda {
+  idTienda: number;
+  fotoTienda: string;
+  nombreTienda: string;
+  dueñoTienda: string;
+  RUCTienda: string;
+  dirección_matriz_tienda: string;
+  direccion_sucursal_tienda: string;
+  correo_electronico_tienda: string;
+  telefono: string;
+}
 
 const TiendaCliente: React.FC = () => {
-  const userId = 1; // Usamos un ID fijo para la demostración
-  const { tiendas, loading, error } = useTiendaViewModel(userId);
+  const [tienda, setTienda] = useState<Tienda | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTienda();
+  }, []);
+
+  const fetchTienda = async () => {
+    try {
+      setLoading(true);
+      // Por ahora obtenemos la primera tienda, en una implementación real podría ser la tienda actual del usuario
+      const tiendas = await tiendaService.getAll();
+      if (tiendas && tiendas.length > 0) {
+        setTienda(tiendas[0]); // Tomamos la primera tienda como ejemplo
+      } else {
+        setError('No hay tiendas disponibles');
+      }
+    } catch (err) {
+      setError('Error al cargar los datos de la tienda');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
-    return <div>Cargando información de la tienda...</div>;
+    return <div>Cargando datos de la tienda...</div>;
   }
 
   if (error) {
     return <div>{error}</div>;
   }
 
-  if (tiendas.length === 0) {
-    return <div>No se encontraron datos de la tienda.</div>;
+  if (!tienda) {
+    return <div>No hay datos de la tienda disponibles</div>;
   }
-
-  const tienda = tiendas[0]; // Suponiendo que el usuario tiene una tienda asociada
 
   return (
     <div className="tienda-cliente-container">
       <h2>Información de la Tienda</h2>
       
-      <div className="tienda-detalle">
-        <div className="detalle-item">
-          <strong>Nombre:</strong>
-          <span>{tienda.nombre}</span>
+      <div className="tienda-info">
+        <div className="tienda-header">
+          {tienda.fotoTienda && (
+            <img src={tienda.fotoTienda} alt={tienda.nombreTienda} className="tienda-logo" />
+          )}
+          <h3>{tienda.nombreTienda}</h3>
         </div>
         
-        <div className="detalle-item">
-          <strong>Punto de Emisión:</strong>
-          <span>{tienda.puntoEmision}</span>
+        <div className="tienda-details">
+          <div className="detail-item">
+            <strong>RUC:</strong> {tienda.RUCTienda}
+          </div>
+          
+          <div className="detail-item">
+            <strong>Dueño:</strong> {tienda.dueñoTienda}
+          </div>
+          
+          <div className="detail-item">
+            <strong>Dirección Matriz:</strong> {tienda.dirección_matriz_tienda}
+          </div>
+          
+          <div className="detail-item">
+            <strong>Dirección Sucursal:</strong> {tienda.direccion_sucursal_tienda}
+          </div>
+          
+          <div className="detail-item">
+            <strong>Correo Electrónico:</strong> {tienda.correo_electronico_tienda}
+          </div>
+          
+          <div className="detail-item">
+            <strong>Teléfono:</strong> {tienda.telefono}
+          </div>
         </div>
-        
-        <div className="detalle-item">
-          <strong>Dirección:</strong>
-          <span>{tienda.direccion}</span>
-        </div>
-        
-        <div className="detalle-item">
-          <strong>Contacto:</strong>
-          <span>{tienda.contacto}</span>
-        </div>
-        
-        <div className="detalle-item">
-          <strong>Teléfono:</strong>
-          <span>{tienda.telefono}</span>
-        </div>
-        
-        <div className="detalle-item">
-          <strong>Correo:</strong>
-          <span>{tienda.correo}</span>
-        </div>
-        
-        <div className="detalle-item">
-          <strong>RUC:</strong>
-          <span>{tienda.ruc}</span>
-        </div>
-      </div>
-      
-      <div className="tienda-contacto">
-        <h3>Contacto</h3>
-        <p>Si necesita más información, puede contactarnos a través de los datos anteriores.</p>
       </div>
     </div>
   );

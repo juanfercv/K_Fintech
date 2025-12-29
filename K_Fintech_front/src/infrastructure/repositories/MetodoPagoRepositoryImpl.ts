@@ -1,109 +1,67 @@
 import type { MetodoPagoRepository } from '../../domain/repositories/MetodoPagoRepository';
 import { MetodoPagoEntity } from '../../domain/entities/MetodoPago';
+import { metodoPagoService } from '../../services/api';
 
-const API_BASE_URL = 'http://localhost:4200';
 
-// Alias para mantener consistencia entre nombre en frontend y backend
-const METODOS_ENDPOINT = '/api/formas_pago';
-
-interface MetodoPagoAPI {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  activo: boolean;
-}
 
 export class MetodoPagoRepositoryImpl implements MetodoPagoRepository {
   async getAll(): Promise<MetodoPagoEntity[]> {
-    // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}`);
-    const data: MetodoPagoAPI[] = await response.json();
-    
-    return data.map((item: MetodoPagoAPI) => 
-      new MetodoPagoEntity(
-        item.id,
-        item.nombre,
-        item.descripcion,
-        item.activo
-      )
-    );
+    try {
+      const data = await metodoPagoService.getAll();
+      return data.map(MetodoPagoEntity.fromBackend);
+    } catch (error) {
+      console.error('Error fetching all payment methods:', error);
+      throw error;
+    }
   }
 
   async getById(id: number): Promise<MetodoPagoEntity | null> {
-    // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`);
-    if (!response.ok) return null;
-    
-    const data: MetodoPagoAPI = await response.json();
-    return new MetodoPagoEntity(
-      data.id,
-      data.nombre,
-      data.descripcion,
-      data.activo
-    );
+    try {
+      const data = await metodoPagoService.getById(id.toString());
+      return MetodoPagoEntity.fromBackend(data);
+    } catch (error) {
+      console.error('Error fetching payment method by id:', error);
+      return null;
+    }
   }
 
   async create(metodo: MetodoPagoEntity): Promise<MetodoPagoEntity> {
-    // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(metodo),
-    });
-    
-    const data: MetodoPagoAPI = await response.json();
-    return new MetodoPagoEntity(
-      data.id,
-      data.nombre,
-      data.descripcion,
-      data.activo
-    );
+    try {
+      const data = await metodoPagoService.create(metodo);
+      return MetodoPagoEntity.fromBackend(data);
+    } catch (error) {
+      console.error('Error creating payment method:', error);
+      throw error;
+    }
   }
 
   async update(id: number, metodo: Partial<MetodoPagoEntity>): Promise<MetodoPagoEntity | null> {
-    // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(metodo),
-    });
-    
-    if (!response.ok) return null;
-    
-    const data: MetodoPagoAPI = await response.json();
-    return new MetodoPagoEntity(
-      data.id,
-      data.nombre,
-      data.descripcion,
-      data.activo
-    );
+    try {
+      const data = await metodoPagoService.update(id.toString(), metodo);
+      return MetodoPagoEntity.fromBackend(data);
+    } catch (error) {
+      console.error('Error updating payment method:', error);
+      return null;
+    }
   }
 
   async delete(id: number): Promise<boolean> {
-    // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`, {
-      method: 'DELETE',
-    });
-    
-    return response.ok;
+    try {
+      await metodoPagoService.delete(id.toString());
+      return true;
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
+      return false;
+    }
   }
 
   async getActive(): Promise<MetodoPagoEntity[]> {
-    // En una implementación real, esto se conectaría con la API
-    const response = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/activas`);
-    const data: MetodoPagoAPI[] = await response.json();
-    
-    return data.map((item: MetodoPagoAPI) => 
-      new MetodoPagoEntity(
-        item.id,
-        item.nombre,
-        item.descripcion,
-        item.activo
-      )
-    );
+    try {
+      const data = await metodoPagoService.getActive();
+      return data.map(MetodoPagoEntity.fromBackend);
+    } catch (error) {
+      console.error('Error fetching active payment methods:', error);
+      throw error;
+    }
   }
 }
