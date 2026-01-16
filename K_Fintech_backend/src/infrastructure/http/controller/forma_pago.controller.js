@@ -11,8 +11,16 @@ formaPagoCtl.listarFormasPago = async (req, res) => {
             id: fp.id_forma_pago,
             nombre: fp.nombre,
             descripcion: fp.descripcion,
-            activo: fp.activo
+            activo: fp.activo,
+            codigoInterno: fp.codigo_interno,
+            codigoSRI: fp.codigo_sri,
+            permitePagoDiferido: fp.permite_pago_diferido,
+            maximoCuotas: fp.maximo_cuotas,
+            integracionPasarela: fp.integracion_pasarela,
+            fechaCreacion: fp.crearFormaPago,
+            fechaModificacion: fp.actualizarFormaPago
         }));
+        res.setHeader('Cache-Control', 'no-store');
         res.json(transformedData);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -29,7 +37,14 @@ formaPagoCtl.obtenerFormaPago = async (req, res) => {
                 id: formaPago.id_forma_pago,
                 nombre: formaPago.nombre,
                 descripcion: formaPago.descripcion,
-                activo: formaPago.activo
+                activo: formaPago.activo,
+                codigoInterno: formaPago.codigo_interno,
+                codigoSRI: formaPago.codigo_sri,
+                permitePagoDiferido: formaPago.permite_pago_diferido,
+                maximoCuotas: formaPago.maximo_cuotas,
+                integracionPasarela: formaPago.integracion_pasarela,
+                fechaCreacion: formaPago.crearFormaPago,
+                fechaModificacion: formaPago.actualizarFormaPago
             };
             res.json(transformedData);
         } else {
@@ -42,16 +57,36 @@ formaPagoCtl.obtenerFormaPago = async (req, res) => {
 
 formaPagoCtl.crearFormaPago = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
-        
+        const { nombre, descripcion, codigoInterno, codigoSRI, permitePagoDiferido, maximoCuotas, integracionPasarela } = req.body;
+
         const nuevaFormaPago = {
             nombre,
             descripcion,
-            activo: true
+            activo: true,
+            codigo_interno: codigoInterno,
+            codigo_sri: codigoSRI,
+            permite_pago_diferido: permitePagoDiferido,
+            maximo_cuotas: maximoCuotas,
+            integracion_pasarela: integracionPasarela
         };
-        
+
         const resultado = await orm.forma_pago.create(nuevaFormaPago);
-        res.status(201).json(resultado);
+
+        const transformed = {
+            id: resultado.id_forma_pago,
+            nombre: resultado.nombre,
+            descripcion: resultado.descripcion,
+            activo: resultado.activo,
+            codigoInterno: resultado.codigo_interno,
+            codigoSRI: resultado.codigo_sri,
+            permitePagoDiferido: resultado.permite_pago_diferido,
+            maximoCuotas: resultado.maximo_cuotas,
+            integracionPasarela: resultado.integracion_pasarela,
+            fechaCreacion: resultado.crearFormaPago,
+            fechaModificacion: resultado.actualizarFormaPago
+        };
+
+        res.status(201).json(transformed);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -60,18 +95,37 @@ formaPagoCtl.crearFormaPago = async (req, res) => {
 formaPagoCtl.actualizarFormaPago = async (req, res) => {
     try {
         const id = req.params.id;
-        const { nombre, descripcion, activo } = req.body;
-        
+        const { nombre, descripcion, activo, codigoInterno, codigoSRI, permitePagoDiferido, maximoCuotas, integracionPasarela } = req.body;
+
         const formaPagoActualizada = {
             nombre,
             descripcion,
-            activo
+            activo,
+            codigo_interno: codigoInterno,
+            codigo_sri: codigoSRI,
+            permite_pago_diferido: permitePagoDiferido,
+            maximo_cuotas: maximoCuotas,
+            integracion_pasarela: integracionPasarela
         };
-        
+
         const formaPago = await orm.forma_pago.findByPk(id);
         if (formaPago) {
             await formaPago.update(formaPagoActualizada);
-            res.json(formaPago);
+            const transformed = {
+                id: formaPago.id_forma_pago,
+                nombre: formaPago.nombre,
+                descripcion: formaPago.descripcion,
+                activo: formaPago.activo,
+                codigoInterno: formaPago.codigo_interno,
+                codigoSRI: formaPago.codigo_sri,
+                permitePagoDiferido: formaPago.permite_pago_diferido,
+                maximoCuotas: formaPago.maximo_cuotas,
+                integracionPasarela: formaPago.integracion_pasarela,
+                fechaCreacion: formaPago.crearFormaPago,
+                fechaModificacion: formaPago.actualizarFormaPago
+            };
+
+            res.json(transformed);
         } else {
             res.status(404).json({ message: 'Forma de pago no encontrada' });
         }

@@ -1,5 +1,15 @@
-import React, { createContext, useContext } from 'react';
-import type { ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
+import { authAPI } from '../services/authAPI';
+
+/* =======================
+   TIPOS
+======================= */
 
 export interface User {
   idDueño: number;
@@ -12,6 +22,8 @@ export interface User {
 
 export interface AuthContextType {
   user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: {
     nombres_Dueño: string;
@@ -22,8 +34,12 @@ export interface AuthContextType {
     password_Dueño: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
-  loading: boolean;
+  refreshUser: () => Promise<void>;
 }
+
+/* =======================
+   CONTEXTO
+======================= */
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -31,50 +47,61 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth debe usarse dentro de AuthProvider');
   }
   return context;
 };
 
+/* =======================
+   PROVIDER
+======================= */
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-import { useState, useEffect } from 'react';
-import { authAPI } from '../services/authAPI';
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is already logged in on component mount
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const userData = await authAPI.getMe();
-        setUser(userData);
-      } catch (error) {
-        // User is not authenticated, keep user as null
-        console.error('Auth check error:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    checkAuthStatus();
-  }, []);
+  /* =======================
+     OBTENER SESIÓN
+  ======================= */
 
-  const login = async (email: string, password: string) => {
+  const refreshUser = async () => {
     try {
-      const userData = await authAPI.login(email, password);
+      const userData = await authAPI.getMe();
       setUser(userData);
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+    } catch {
+      // 🔹 401 = no sesión → estado normal
+      setUser(null);
     }
   };
+
+  /* =======================
+     INIT
+  ======================= */
+
+  useEffect(() => {
+    const initAuth = async () => {
+      await refreshUser();
+      setLoading(false);
+    };
+    initAuth();
+  }, []);
+
+  /* =======================
+     LOGIN
+  ======================= */
+
+  const login = async (email: string, password: string) => {
+    await authAPI.login(email, password);
+    await refreshUser(); // 👈 CLAVE
+  };
+
+  /* =======================
+     REGISTER
+  ======================= */
 
   const register = async (userData: {
     nombres_Dueño: string;
@@ -84,31 +111,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     correo_electronico_Dueño: string;
     password_Dueño: string;
   }) => {
-    try {
-      const newUser = await authAPI.register(userData);
-      setUser(newUser);
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
+    await authAPI.register(userData);
+    await refreshUser();
   };
+
+  /* =======================
+     LOGOUT
+  ======================= */
 
   const logout = async () => {
     try {
       await authAPI.logout();
-      setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
+    } finally {
       setUser(null);
     }
   };
 
-  const value = {
+  /* =======================
+     PROVIDER VALUE
+  ======================= */
+
+  const value: AuthContextType = {
     user,
+    isAuthenticated: !!user,
+    loading,
     login,
     register,
     logout,
-    loading,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

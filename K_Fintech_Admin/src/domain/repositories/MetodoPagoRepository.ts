@@ -1,4 +1,4 @@
-import type { MetodoPagoEntity } from '../entities/MetodoPago';
+import type { MetodoPagoEntity } from '../entities/MetodoPagoAdmin';
 
 export interface MetodoPagoRepository {
   getAll(): Promise<MetodoPagoEntity[]>;

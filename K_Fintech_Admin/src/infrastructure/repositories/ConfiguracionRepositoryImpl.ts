@@ -4,20 +4,21 @@ const API_BASE_URL = ''; // Usando URLs relativas para aprovechar el proxy de Vi
 
 export class ConfiguracionRepositoryImpl {
   // PARÁMETROS DEL SISTEMA
-  async getParametros(): Promise<any> {
+  async getParametros(): Promise<ParametrosGenerales> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/configuracion/parametros`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return await response.json();
+      const data = await response.json();
+      return data as ParametrosGenerales;
     } catch (error) {
       console.error('Error fetching parametros:', error);
       throw error;
     }
   }
 
-  async updateParametros(parametros: any): Promise<void> {
+  async updateParametros(parametros: ParametrosGenerales): Promise<void> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/configuracion/parametros`, {
         method: 'PUT',
@@ -26,7 +27,7 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(parametros),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -59,11 +60,11 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(rol),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error creating rol:', error);
@@ -80,11 +81,11 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(rol),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error updating rol:', error);
@@ -115,11 +116,11 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(usuario),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error creating usuario:', error);
@@ -136,11 +137,11 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(usuario),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error updating usuario:', error);
@@ -153,7 +154,7 @@ export class ConfiguracionRepositoryImpl {
       const response = await fetch(`${API_BASE_URL}/api/configuracion/usuarios/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -186,11 +187,11 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(integracion),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error creating integracion:', error);
@@ -207,11 +208,11 @@ export class ConfiguracionRepositoryImpl {
         },
         body: JSON.stringify(integracion),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Error updating integracion:', error);

@@ -1,30 +1,37 @@
 import type { MetodoPagoAdminRepository } from '../../domain/repositories/MetodoPagoAdminRepository';
-import type { MetodoPagoAdmin } from '../../domain/entities/MetodoPagoAdmin';
+import type { MetodoPagoAdmin, MetodoPagoAdminCreate, MetodoPagoAdminUpdate } from '../../domain/entities/MetodoPagoAdmin';
 
 const API_BASE_URL = '';
 const METODOS_ENDPOINT = '/api/formas_pago';
 
 export class MetodoPagoAdminRepositoryImpl implements MetodoPagoAdminRepository {
   private async mapApiToAdmin(apiItem: any): Promise<MetodoPagoAdmin> {
-    return {
-      id: apiItem.id || apiItem.id_forma_pago,
-      nombre: apiItem.nombre || '',
-      descripcion: apiItem.descripcion || '',
-      codigoInterno: apiItem.codigoInterno || '',
-      codigoSRI: apiItem.codigoSRI || '',
-      activo: typeof apiItem.activo === 'boolean' ? apiItem.activo : true,
-      permitePagoDiferido: apiItem.permitePagoDiferido || false,
-      maximoCuotas: apiItem.maximoCuotas || 1,
-      integracionPasarela: apiItem.integracionPasarela || false,
-      fechaCreacion: apiItem.crearFormaPago ? new Date(apiItem.crearFormaPago) : new Date(),
-      fechaModificacion: apiItem.actualizarFormaPago ? new Date(apiItem.actualizarFormaPago) : new Date(),
-      habilitadoPorTienda: apiItem.habilitadoPorTienda || true,
-      configuracionTiendas: apiItem.configuracionTiendas || []
-    };
+    return new (await import('../../domain/entities/MetodoPagoAdmin')).MetodoPagoEntity(
+      apiItem.id || apiItem.id_forma_pago,
+      apiItem.nombre || '',
+      apiItem.codigoInterno || apiItem.codigo_interno || '',
+      apiItem.codigoSRI || apiItem.codigo_sri || '',
+      apiItem.descripcion || '',
+      typeof apiItem.activo === 'boolean' ? apiItem.activo : (typeof apiItem.activo !== 'undefined' ? apiItem.activo : true),
+      apiItem.permitePagoDiferido ?? apiItem.permite_pago_diferido ?? false,
+      apiItem.maximoCuotas ?? apiItem.maximo_cuotas ?? 1,
+      apiItem.integracionPasarela ?? apiItem.integracion_pasarela ?? false,
+      apiItem.habilitadoPorTienda ?? apiItem.habilitado_por_tienda ?? true,
+      apiItem.configuracionTiendas ?? apiItem.configuracion_tiendas ?? [],
+      apiItem.crearFormaPago ? new Date(apiItem.crearFormaPago) : new Date(),
+      apiItem.actualizarFormaPago ? new Date(apiItem.actualizarFormaPago) : new Date()
+    );
   }
 
   async getAll(): Promise<MetodoPagoAdmin[]> {
     const res = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}`);
+    const data = await res.json();
+    const mapped = await Promise.all(data.map((d: any) => this.mapApiToAdmin(d)));
+    return mapped;
+  }
+
+  async getActive(): Promise<MetodoPagoAdmin[]> {
+    const res = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/activas`);
     const data = await res.json();
     const mapped = await Promise.all(data.map((d: any) => this.mapApiToAdmin(d)));
     return mapped;
@@ -37,7 +44,7 @@ export class MetodoPagoAdminRepositoryImpl implements MetodoPagoAdminRepository 
     return this.mapApiToAdmin(data);
   }
 
-  async create(metodoPagoData: Omit<MetodoPagoAdmin, 'id'>): Promise<MetodoPagoAdmin> {
+  async create(metodoPagoData: MetodoPagoAdminCreate): Promise<MetodoPagoAdmin> {
     const res = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,7 +54,7 @@ export class MetodoPagoAdminRepositoryImpl implements MetodoPagoAdminRepository 
     return this.mapApiToAdmin(data);
   }
 
-  async update(id: number, metodoPagoData: Partial<Omit<MetodoPagoAdmin, 'id'>>): Promise<MetodoPagoAdmin | null> {
+  async update(id: number, metodoPagoData: MetodoPagoAdminUpdate): Promise<MetodoPagoAdmin | null> {
     const res = await fetch(`${API_BASE_URL}${METODOS_ENDPOINT}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

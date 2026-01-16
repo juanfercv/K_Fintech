@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMetodoPagoAdminViewModel } from '../../presentation/viewmodels/MetodoPagoAdminViewModel';
-import type { MetodoPagoAdmin } from '../../domain/entities/MetodoPagoAdmin';
+import type { MetodoPagoEntity } from '../../domain/entities/MetodoPagoAdmin';
 
 // Estilos inline para diseño responsivo consistente
 const styles = {
@@ -183,14 +183,14 @@ const styles = {
 };
 
 const MetodosPagoAdmin: React.FC = () => {
-  const { 
-    metodosPago, 
-    loading, 
-    error, 
-    crearMetodoPago, 
-    actualizarMetodoPago 
+  const {
+    metodosPago,
+    loading,
+    error,
+    crearMetodoPago,
+    actualizarMetodoPago
   } = useMetodoPagoAdminViewModel();
-  
+
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -201,7 +201,7 @@ const MetodosPagoAdmin: React.FC = () => {
     maximoCuotas: 1,
     integracionPasarela: false
   });
-  
+
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [mostrandoForm, setMostrandoForm] = useState(false);
   const [confirmacion, setConfirmacion] = useState<{
@@ -213,22 +213,20 @@ const MetodosPagoAdmin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       if (editandoId) {
         await actualizarMetodoPago(editandoId, formData);
       } else {
-        // Add default values for system-managed fields
-        const formDataWithDefaults = {
+        // No incluir campos gestionados por el sistema (fechas). El backend los genera.
+        const payload = {
           ...formData,
-          fechaCreacion: new Date(),
-          fechaModificacion: new Date(),
           habilitadoPorTienda: true,
           configuracionTiendas: []
         };
-        await crearMetodoPago(formDataWithDefaults);
+        await crearMetodoPago(payload);
       }
-      
+
       // Resetear formulario
       setFormData({
         nombre: '',
@@ -247,7 +245,7 @@ const MetodosPagoAdmin: React.FC = () => {
     }
   };
 
-  const handleEditar = (metodo: MetodoPagoAdmin) => {
+  const handleEditar = (metodo: MetodoPagoEntity) => {
     setFormData({
       nombre: metodo.nombre,
       descripcion: metodo.descripcion,
@@ -262,7 +260,7 @@ const MetodosPagoAdmin: React.FC = () => {
     setMostrandoForm(true);
   };
 
-  const handleToggleActivo = (metodo: MetodoPagoAdmin) => {
+  const handleToggleActivo = (metodo: MetodoPagoEntity) => {
     const accion = metodo.activo ? 'desactivar' : 'activar';
     setConfirmacion({
       mostrar: true,
@@ -274,13 +272,12 @@ const MetodosPagoAdmin: React.FC = () => {
 
   const handleConfirmarToggle = async () => {
     if (!confirmacion.metodoId || !confirmacion.accion) return;
-    
+
     try {
-      await actualizarMetodoPago(confirmacion.metodoId, { 
-        activo: confirmacion.accion === 'activar',
-        fechaModificacion: new Date()
+      await actualizarMetodoPago(confirmacion.metodoId, {
+        activo: confirmacion.accion === 'activar'
       });
-      
+
       // Cerrar modal
       setConfirmacion({ mostrar: false, accion: null, metodoId: null, metodoNombre: '' });
     } catch (err) {
@@ -331,8 +328,8 @@ const MetodosPagoAdmin: React.FC = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h2 style={styles.title}>Gestión de Métodos de Pago</h2>
-        
-        <button 
+
+        <button
           style={styles.primaryButton}
           onClick={() => setMostrandoForm(!mostrandoForm)}
           onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
@@ -352,108 +349,108 @@ const MetodosPagoAdmin: React.FC = () => {
                 type="text"
                 id="nombre"
                 value={formData.nombre}
-                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 required
                 style={styles.input}
               />
             </div>
-              
+
             <div style={styles.formGroup}>
               <label htmlFor="descripcion" style={styles.label}>Descripción:</label>
               <input
                 type="text"
                 id="descripcion"
                 value={formData.descripcion}
-                onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                 required
                 style={styles.input}
               />
             </div>
-              
+
             <div style={styles.formGroup}>
               <label htmlFor="codigoInterno" style={styles.label}>Código Interno:</label>
               <input
                 type="text"
                 id="codigoInterno"
                 value={formData.codigoInterno}
-                onChange={(e) => setFormData({...formData, codigoInterno: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, codigoInterno: e.target.value })}
                 required
                 style={styles.input}
               />
             </div>
-              
+
             <div style={styles.formGroup}>
               <label htmlFor="codigoSRI" style={styles.label}>Código SRI:</label>
               <input
                 type="text"
                 id="codigoSRI"
                 value={formData.codigoSRI}
-                onChange={(e) => setFormData({...formData, codigoSRI: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, codigoSRI: e.target.value })}
                 required
                 style={styles.input}
               />
             </div>
-              
+
             <div style={styles.formGroup}>
               <label style={styles.checkboxLabel}>
                 <input
                   type="checkbox"
                   checked={formData.activo}
-                  onChange={(e) => setFormData({...formData, activo: e.target.checked})}
+                  onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
                   style={styles.checkbox}
                 />
                 Activo
               </label>
             </div>
-              
+
             <div style={styles.formGroup}>
               <label style={styles.checkboxLabel}>
                 <input
                   type="checkbox"
                   checked={formData.permitePagoDiferido}
-                  onChange={(e) => setFormData({...formData, permitePagoDiferido: e.target.checked})}
+                  onChange={(e) => setFormData({ ...formData, permitePagoDiferido: e.target.checked })}
                   style={styles.checkbox}
                 />
                 Permite Pago Diferido
               </label>
             </div>
-              
+
             <div style={styles.formGroup}>
               <label htmlFor="maximoCuotas" style={styles.label}>Máximo de Cuotas:</label>
               <input
                 type="number"
                 id="maximoCuotas"
                 value={formData.maximoCuotas}
-                onChange={(e) => setFormData({...formData, maximoCuotas: parseInt(e.target.value) || 1})}
+                onChange={(e) => setFormData({ ...formData, maximoCuotas: parseInt(e.target.value) || 1 })}
                 min="1"
                 required
                 style={styles.input}
               />
             </div>
-              
+
             <div style={styles.formGroup}>
               <label style={styles.checkboxLabel}>
                 <input
                   type="checkbox"
                   checked={formData.integracionPasarela}
-                  onChange={(e) => setFormData({...formData, integracionPasarela: e.target.checked})}
+                  onChange={(e) => setFormData({ ...formData, integracionPasarela: e.target.checked })}
                   style={styles.checkbox}
                 />
                 Integración con Pasarela
               </label>
             </div>
-            
+
             <div style={styles.formActions}>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 style={styles.primaryButton}
                 onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#7c3aed'}
                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#6b46c1'}
               >
                 {editandoId ? 'Actualizar' : 'Guardar'}
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 style={styles.secondaryButton}
                 onClick={handleCancelar}
                 onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#cbd5e1'}
@@ -468,8 +465,8 @@ const MetodosPagoAdmin: React.FC = () => {
 
       <div style={styles.listSection}>
         <h3 style={styles.listTitle}>Métodos de Pago Registrados</h3>
-        
-        <div style={{overflowX: 'auto'} as React.CSSProperties}>
+
+        <div style={{ overflowX: 'auto' } as React.CSSProperties}>
           <table style={styles.table}>
             <thead>
               <tr>
@@ -502,16 +499,16 @@ const MetodosPagoAdmin: React.FC = () => {
                   <td style={styles.tableCell}>{metodo.maximoCuotas}</td>
                   <td style={styles.tableCell}>{metodo.integracionPasarela ? 'Sí' : 'No'}</td>
                   <td style={styles.tableCell}>
-                    <button 
-                      style={{...styles.actionButton, ...styles.editButton}}
+                    <button
+                      style={{ ...styles.actionButton, ...styles.editButton }}
                       onClick={() => handleEditar(metodo)}
                       onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
                       onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
                     >
                       Editar
                     </button>
-                    <button 
-                      style={metodo.activo ? {...styles.actionButton, ...styles.deleteButton} : {...styles.actionButton, ...styles.activateButton}}
+                    <button
+                      style={metodo.activo ? { ...styles.actionButton, ...styles.deleteButton } : { ...styles.actionButton, ...styles.activateButton }}
                       onClick={() => handleToggleActivo(metodo)}
                       onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
                       onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
@@ -559,7 +556,7 @@ const MetodosPagoAdmin: React.FC = () => {
             }}>
               Confirmar Acción
             </h3>
-            
+
             <p style={{
               color: '#374151',
               fontSize: '16px',
@@ -568,7 +565,7 @@ const MetodosPagoAdmin: React.FC = () => {
             }}>
               ¿Estás seguro de {confirmacion.accion} el método de pago <strong>"{confirmacion.metodoNombre}"</strong>?
             </p>
-            
+
             <div style={{
               display: 'flex',
               gap: '15px',
@@ -592,7 +589,7 @@ const MetodosPagoAdmin: React.FC = () => {
               >
                 Confirmar
               </button>
-              
+
               <button
                 onClick={handleCancelarToggle}
                 style={{
