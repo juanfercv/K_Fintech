@@ -191,7 +191,7 @@ const styles = {
 };
 
 const ConfiguracionGeneral: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'parametros' | 'usuarios' | 'roles' | 'integraciones'>('parametros');
+  const [activeTab, setActiveTab] = useState<'parametros' | 'usuarios' | 'roles' | 'integraciones' | 'soluciones'>('parametros');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -278,6 +278,41 @@ const ConfiguracionGeneral: React.FC = () => {
     }
   ]);
 
+  const [soluciones, setSoluciones] = useState([
+    {
+      id: 1,
+      nombre: 'Facturación Electrónica',
+      descripcion: 'Sistema completo de facturación electrónica con integración SRI',
+      estado: 'activo',
+      modulos: ['Facturas', 'Notas de Crédito', 'Notas de Débito', 'Retenciones'],
+      version: '1.0.0'
+    },
+    {
+      id: 2,
+      nombre: 'Gestión de Clientes',
+      descripcion: 'Administración integral de clientes y su información',
+      estado: 'activo',
+      modulos: ['Perfiles', 'Historial', 'Contacto', 'Crédito'],
+      version: '1.0.0'
+    },
+    {
+      id: 3,
+      nombre: 'Administración de Tiendas',
+      descripcion: 'Control multi-sucursal y gestión de inventario',
+      estado: 'activo',
+      modulos: ['Sucursales', 'Inventario', 'Empleados', 'Reportes'],
+      version: '1.0.0'
+    },
+    {
+      id: 4,
+      nombre: 'Métodos de Pago',
+      descripcion: 'Configuración de múltiples formas de pago',
+      estado: 'activo',
+      modulos: ['Efectivo', 'Tarjeta', 'Transferencia', 'Cheque'],
+      version: '1.0.0'
+    }
+  ]);
+
   // Repositorio y carga inicial
   const repository = new ConfiguracionRepositoryImpl();
 
@@ -336,24 +371,28 @@ const ConfiguracionGeneral: React.FC = () => {
       setError(null);
       
       // Validar datos
-      if (!parametros.moneda.codigo || !parametros.pais.codigo) {
+      if (!parametros?.moneda?.codigo || !parametros?.pais?.codigo) {
         throw new Error('Moneda y País son requeridos');
       }
       
-      if (parametros.impuestos.iva.porcentaje < 0 || parametros.impuestos.ice.porcentaje < 0) {
+      if ((parametros?.impuestos?.iva?.porcentaje ?? 0) < 0 || (parametros?.impuestos?.ice?.porcentaje ?? 0) < 0) {
         throw new Error('Los porcentajes no pueden ser negativos');
       }
       
       const parametrosParaGuardar = {
-        moneda: parametros.moneda,
-        pais: parametros.pais,
-        impuestos: parametros.impuestos,
+        moneda: parametros.moneda || { codigo: 'USD', simbolo: '$', nombre: 'Dólar Estadounidense', decimales: 2 },
+        pais: parametros.pais || { codigo: 'EC', nombre: 'Ecuador', codigoTelefono: '+593' },
+        impuestos: parametros.impuestos || {
+          iva: { porcentaje: 12, activo: true },
+          ice: { porcentaje: 0, activo: false },
+          retencionFuente: { porcentaje: 1, activo: true }
+        },
         documentos: {
-          prefijo: parametros.formatoDocumentos.prefijoFactura,
-          longitud: parametros.formatoDocumentos.longitudSecuencia,
-          incluir_anio: parametros.formatoDocumentos.incluirAnio,
-          incluir_mes: parametros.formatoDocumentos.incluirMes,
-          separador: parametros.formatoDocumentos.separador
+          prefijo: parametros?.formatoDocumentos?.prefijoFactura || 'FAC',
+          longitud: parametros?.formatoDocumentos?.longitudSecuencia || 8,
+          incluir_anio: parametros?.formatoDocumentos?.incluirAnio ?? true,
+          incluir_mes: parametros?.formatoDocumentos?.incluirMes ?? true,
+          separador: parametros?.formatoDocumentos?.separador || '-'
         }
       };
       
@@ -480,10 +519,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <label htmlFor="monedaCodigo" style={styles.label}>Código de Moneda:</label>
             <select
               id="monedaCodigo"
-              value={parametros.moneda.codigo}
+              value={parametros.moneda?.codigo || 'USD'}
               onChange={(e) => setParametros({
                 ...parametros,
-                moneda: {...parametros.moneda, codigo: e.target.value}
+                moneda: {...(parametros.moneda || {}), codigo: e.target.value}
               })}
               style={styles.select}
             >
@@ -499,10 +538,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <input
               type="text"
               id="monedaSimbolo"
-              value={parametros.moneda.simbolo}
+              value={parametros.moneda?.simbolo || '$'}
               onChange={(e) => setParametros({
                 ...parametros,
-                moneda: {...parametros.moneda, simbolo: e.target.value}
+                moneda: {...(parametros.moneda || {}), simbolo: e.target.value}
               })}
               style={styles.input}
             />
@@ -512,10 +551,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <label htmlFor="paisCodigo" style={styles.label}>País:</label>
             <select
               id="paisCodigo"
-              value={parametros.pais.codigo}
+              value={parametros.pais?.codigo || 'EC'}
               onChange={(e) => setParametros({
                 ...parametros,
-                pais: {...parametros.pais, codigo: e.target.value}
+                pais: {...(parametros.pais || {}), codigo: e.target.value}
               })}
               style={styles.select}
             >
@@ -531,10 +570,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <input
               type="text"
               id="paisTelefono"
-              value={parametros.pais.codigoTelefono}
+              value={parametros.pais?.codigoTelefono || '+593'}
               onChange={(e) => setParametros({
                 ...parametros,
-                pais: {...parametros.pais, codigoTelefono: e.target.value}
+                pais: {...(parametros.pais || {}), codigoTelefono: e.target.value}
               })}
               style={styles.input}
             />
@@ -549,12 +588,12 @@ const ConfiguracionGeneral: React.FC = () => {
             <label style={styles.label}>IVA (%):</label>
             <input
               type="number"
-              value={parametros.impuestos.iva.porcentaje}
+              value={parametros.impuestos?.iva?.porcentaje || 0}
               onChange={(e) => setParametros({
                 ...parametros,
                 impuestos: {
                   ...parametros.impuestos,
-                  iva: {...parametros.impuestos.iva, porcentaje: parseFloat(e.target.value) || 0}
+                  iva: {...(parametros.impuestos?.iva || {}), porcentaje: parseFloat(e.target.value) || 0}
                 }
               })}
               style={styles.input}
@@ -562,12 +601,12 @@ const ConfiguracionGeneral: React.FC = () => {
             <div style={{...styles.checkboxGroup, marginTop: '8px'}}>
               <input
                 type="checkbox"
-                checked={parametros.impuestos.iva.activo}
+                checked={parametros.impuestos?.iva?.activo || false}
                 onChange={(e) => setParametros({
                   ...parametros,
                   impuestos: {
                     ...parametros.impuestos,
-                    iva: {...parametros.impuestos.iva, activo: e.target.checked}
+                    iva: {...(parametros.impuestos?.iva || {}), activo: e.target.checked}
                   }
                 })}
                 style={styles.checkbox}
@@ -580,12 +619,12 @@ const ConfiguracionGeneral: React.FC = () => {
             <label style={styles.label}>ICE (%):</label>
             <input
               type="number"
-              value={parametros.impuestos.ice.porcentaje}
+              value={parametros.impuestos?.ice?.porcentaje || 0}
               onChange={(e) => setParametros({
                 ...parametros,
                 impuestos: {
                   ...parametros.impuestos,
-                  ice: {...parametros.impuestos.ice, porcentaje: parseFloat(e.target.value) || 0}
+                  ice: {...(parametros.impuestos?.ice || {}), porcentaje: parseFloat(e.target.value) || 0}
                 }
               })}
               style={styles.input}
@@ -593,12 +632,12 @@ const ConfiguracionGeneral: React.FC = () => {
             <div style={{...styles.checkboxGroup, marginTop: '8px'}}>
               <input
                 type="checkbox"
-                checked={parametros.impuestos.ice.activo}
+                checked={parametros.impuestos?.ice?.activo || false}
                 onChange={(e) => setParametros({
                   ...parametros,
                   impuestos: {
                     ...parametros.impuestos,
-                    ice: {...parametros.impuestos.ice, activo: e.target.checked}
+                    ice: {...(parametros.impuestos?.ice || {}), activo: e.target.checked}
                   }
                 })}
                 style={styles.checkbox}
@@ -611,12 +650,12 @@ const ConfiguracionGeneral: React.FC = () => {
             <label style={styles.label}>Retención Fuente (%):</label>
             <input
               type="number"
-              value={parametros.impuestos.retencionFuente.porcentaje}
+              value={parametros.impuestos?.retencionFuente?.porcentaje || 0}
               onChange={(e) => setParametros({
                 ...parametros,
                 impuestos: {
                   ...parametros.impuestos,
-                  retencionFuente: {...parametros.impuestos.retencionFuente, porcentaje: parseFloat(e.target.value) || 0}
+                  retencionFuente: {...(parametros.impuestos?.retencionFuente || {}), porcentaje: parseFloat(e.target.value) || 0}
                 }
               })}
               style={styles.input}
@@ -624,12 +663,12 @@ const ConfiguracionGeneral: React.FC = () => {
             <div style={{...styles.checkboxGroup, marginTop: '8px'}}>
               <input
                 type="checkbox"
-                checked={parametros.impuestos.retencionFuente.activo}
+                checked={parametros.impuestos?.retencionFuente?.activo || false}
                 onChange={(e) => setParametros({
                   ...parametros,
                   impuestos: {
                     ...parametros.impuestos,
-                    retencionFuente: {...parametros.impuestos.retencionFuente, activo: e.target.checked}
+                    retencionFuente: {...(parametros.impuestos?.retencionFuente || {}), activo: e.target.checked}
                   }
                 })}
                 style={styles.checkbox}
@@ -648,10 +687,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <input
               type="text"
               id="prefijoFactura"
-              value={parametros.formatoDocumentos.prefijoFactura}
+              value={parametros.formatoDocumentos?.prefijoFactura || 'FAC'}
               onChange={(e) => setParametros({
                 ...parametros,
-                formatoDocumentos: {...parametros.formatoDocumentos, prefijoFactura: e.target.value}
+                formatoDocumentos: {...(parametros.formatoDocumentos || {}), prefijoFactura: e.target.value}
               })}
               style={styles.input}
             />
@@ -662,10 +701,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <input
               type="number"
               id="longitudSecuencia"
-              value={parametros.formatoDocumentos.longitudSecuencia}
+              value={parametros.formatoDocumentos?.longitudSecuencia || 8}
               onChange={(e) => setParametros({
                 ...parametros,
-                formatoDocumentos: {...parametros.formatoDocumentos, longitudSecuencia: parseInt(e.target.value) || 8}
+                formatoDocumentos: {...(parametros.formatoDocumentos || {}), longitudSecuencia: parseInt(e.target.value) || 8}
               })}
               style={styles.input}
             />
@@ -675,10 +714,10 @@ const ConfiguracionGeneral: React.FC = () => {
             <label htmlFor="separador" style={styles.label}>Separador:</label>
             <select
               id="separador"
-              value={parametros.formatoDocumentos.separador}
+              value={parametros.formatoDocumentos?.separador || '-'}
               onChange={(e) => setParametros({
                 ...parametros,
-                formatoDocumentos: {...parametros.formatoDocumentos, separador: e.target.value}
+                formatoDocumentos: {...(parametros.formatoDocumentos || {}), separador: e.target.value}
               })}
               style={styles.select}
             >
@@ -694,10 +733,10 @@ const ConfiguracionGeneral: React.FC = () => {
           <div style={styles.checkboxGroup}>
             <input
               type="checkbox"
-              checked={parametros.formatoDocumentos.incluirAnio}
+              checked={parametros.formatoDocumentos?.incluirAnio ?? true}
               onChange={(e) => setParametros({
                 ...parametros,
-                formatoDocumentos: {...parametros.formatoDocumentos, incluirAnio: e.target.checked}
+                formatoDocumentos: {...(parametros.formatoDocumentos || {}), incluirAnio: e.target.checked}
               })}
               style={styles.checkbox}
             />
@@ -707,10 +746,10 @@ const ConfiguracionGeneral: React.FC = () => {
           <div style={styles.checkboxGroup}>
             <input
               type="checkbox"
-              checked={parametros.formatoDocumentos.incluirMes}
+              checked={parametros.formatoDocumentos?.incluirMes ?? true}
               onChange={(e) => setParametros({
                 ...parametros,
-                formatoDocumentos: {...parametros.formatoDocumentos, incluirMes: e.target.checked}
+                formatoDocumentos: {...(parametros.formatoDocumentos || {}), incluirMes: e.target.checked}
               })}
               style={styles.checkbox}
             />
@@ -1195,6 +1234,78 @@ const ConfiguracionGeneral: React.FC = () => {
     </div>
   );
 
+  const renderSolucionesTab = () => (
+    <div style={styles.tabContent}>
+      <h3 style={styles.sectionTitle}>Soluciones y Módulos Disponibles</h3>
+      
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px'}}>
+        {soluciones.map(solucion => (
+          <div key={solucion.id} style={styles.card}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '15px'}}>
+              <div>
+                <h4 style={{...styles.cardTitle, marginBottom: '5px'}}>{solucion.nombre}</h4>
+                <p style={{color: '#64748b', fontSize: '12px', margin: 0}}>v{solucion.version}</p>
+              </div>
+              <span style={{
+                backgroundColor: solucion.estado === 'activo' ? '#ede9fe' : '#fee2e2',
+                color: solucion.estado === 'activo' ? '#5b21b6' : '#991b1b',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: '600',
+                whiteSpace: 'nowrap'
+              }}>
+                {solucion.estado === 'activo' ? '✅ Activa' : '❌ Inactiva'}
+              </span>
+            </div>
+            
+            <p style={{color: '#475569', fontSize: '13px', marginBottom: '15px', lineHeight: '1.5'}}>
+              {solucion.descripcion}
+            </p>
+            
+            <div style={{backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '15px'}}>
+              <p style={{fontSize: '12px', fontWeight: '600', color: '#374151', marginBottom: '8px'}}>Módulos incluidos:</p>
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
+                {solucion.modulos.map((modulo, idx) => (
+                  <span key={idx} style={{
+                    backgroundColor: '#ede9fe',
+                    color: '#5b21b6',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}>
+                    {modulo}
+                  </span>
+                ))}
+              </div>
+            </div>
+            
+            <div style={{display: 'flex', gap: '8px'}}>
+              <button style={{
+                ...styles.buttonPrimary,
+                flex: 1,
+                padding: '8px 12px',
+                fontSize: '13px'
+              }}>
+                Configurar
+              </button>
+              <button style={{
+                ...styles.buttonSecondary,
+                flex: 1,
+                padding: '8px 12px',
+                fontSize: '13px',
+                marginLeft: 0
+              }}>
+                Más info
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -1253,12 +1364,22 @@ const ConfiguracionGeneral: React.FC = () => {
         >
           🔌 Integraciones
         </button>
+        <button
+          style={{
+            ...styles.tabButton,
+            ...(activeTab === 'soluciones' ? styles.tabButtonActive : {})
+          }}
+          onClick={() => setActiveTab('soluciones')}
+        >
+          💡 Soluciones
+        </button>
       </div>
 
       {activeTab === 'parametros' && renderParametrosTab()}
       {activeTab === 'usuarios' && renderUsuariosTab()}
       {activeTab === 'roles' && renderRolesTab()}
       {activeTab === 'integraciones' && renderIntegracionesTab()}
+      {activeTab === 'soluciones' && renderSolucionesTab()}
     </div>
   );
 };
