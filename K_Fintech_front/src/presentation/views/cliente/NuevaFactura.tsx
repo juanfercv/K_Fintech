@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type CSSProperties } from 'react';
+import React, { useState, useEffect, useRef, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type Cliente } from '../../../domain/entities/Cliente';
 import { type DetalleFactura } from '../../../domain/entities/Factura';
@@ -26,11 +26,15 @@ const NuevaFactura: React.FC = () => {
 
     const [totales, setTotales] = useState({
         subtotal: 0,
-        base0: 0,
-        base15: 0,
         iva: 0,
         total: 0
     });
+    const [metodosPago, setMetodosPago] = useState<any[]>([]);
+    const [metodoPagoSel, setMetodoPagoSel] = useState<number | string>('');
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+    const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
+    const lastAddedIndexRef = useRef<number | null>(null);
 
     // ================== DATOS ==================
     useEffect(() => {
@@ -38,6 +42,18 @@ const NuevaFactura: React.FC = () => {
             .then(res => res.json())
             .then(data => setTiendas(data))
             .catch(err => console.error(err));
+        // cargar formas de pago y normalizar campos
+        fetch('/api/formas_pago')
+            .then(r => r.json())
+            .then(d => {
+                const normalized = (d || []).map((m: any) => ({
+                    id: m.id ?? m.id_forma_pago ?? m.idFormaPago ?? m.id_formaPago,
+                    nombre: m.nombre ?? m.nombre_forma_pago ?? m.name,
+                    descripcion: m.descripcion ?? m.descripcion_forma_pago ?? m.detalle ?? m.description
+                }));
+                setMetodosPago(normalized);
+            })
+            .catch(() => setMetodosPago([]));
     }, []);
 
     const tiendaSeleccionada = tiendas.find(t => t.idTienda == idTiendaSel);
@@ -70,21 +86,16 @@ const NuevaFactura: React.FC = () => {
     // ================== CÁLCULOS ==================
     useEffect(() => {
         let subtotal = 0;
-        let base0 = 0;
-        let base15 = 0;
 
         detalles.forEach(d => {
-            const total = d.cantidad * d.precio_unitario;
+            const total = Number(d.cantidad) * Number(d.precio_unitario);
             subtotal += total;
-            d.precio_unitario === 0 ? base0 += total : base15 += total;
         });
 
-        const iva = base15 * 0.15;
+        const iva = subtotal * 0.15;
 
         setTotales({
             subtotal,
-            base0,
-            base15,
             iva,
             total: subtotal + iva - descuento
         });
@@ -92,13 +103,26 @@ const NuevaFactura: React.FC = () => {
 
     // ================== DETALLES ==================
     const agregarFila = () => {
-        setDetalles([...detalles, {
-            descripcion: '',
-            cantidad: 1,
-            precio_unitario: 0,
-            precio_total: 0
-        }]);
+        setDetalles(prev => {
+            const idx = prev.length;
+            lastAddedIndexRef.current = idx;
+            return [...prev, {
+                descripcion: '',
+                cantidad: 1,
+                precio_unitario: 0,
+                precio_total: 0
+            }];
+        });
     };
+
+    useEffect(() => {
+        const idx = lastAddedIndexRef.current;
+        if (idx !== null) {
+            const el = inputsRef.current[`cantidad-${idx}`];
+            setTimeout(() => el?.focus(), 50);
+            lastAddedIndexRef.current = null;
+        }
+    }, [detalles.length]);
 
     const eliminarFila = (i: number) => {
         setDetalles(detalles.filter((_, index) => index !== i));
@@ -108,7 +132,7 @@ const NuevaFactura: React.FC = () => {
         const copia = [...detalles];
         // @ts-ignore
         copia[i][campo] = valor;
-        copia[i].precio_total = copia[i].cantidad * copia[i].precio_unitario;
+        copia[i].precio_total = Number(copia[i].cantidad) * Number(copia[i].precio_unitario);
         setDetalles(copia);
     };
 
@@ -116,6 +140,7 @@ const NuevaFactura: React.FC = () => {
     const emitirFactura = async () => {
         if (!idTiendaSel) return alert('Seleccione tienda');
         if (!clienteSeleccionado && !mostrarRegistroRapido) return alert('Identifique cliente');
+        if (metodoPagoSel === '' || metodoPagoSel === null || metodoPagoSel === undefined) return alert('Seleccione forma de pago');
         if (detalles.length === 0) return alert('Agregue productos');
 
         try {
@@ -131,15 +156,18 @@ const NuevaFactura: React.FC = () => {
                 idCliente = cli.id_cliente;
             }
 
+            const payload = {
+                idTienda: idTiendaSel,
+                idCliente,
+                fecha_emision: new Date().toISOString().split('T')[0],
+                estado_factura: 'Emitida',
+                idFormaPago: Number(metodoPagoSel)
+            };
+            console.log('Emitir factura payload:', payload);
             const res = await fetch('/api/facturas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    idTienda: idTiendaSel,
-                    idCliente,
-                    fecha_emision: new Date().toISOString().split('T')[0],
-                    estado_factura: 'Emitida'
-                })
+                body: JSON.stringify(payload)
             });
 
             const factura = await res.json();
@@ -152,8 +180,8 @@ const NuevaFactura: React.FC = () => {
                 });
             }
 
-            alert('Factura emitida correctamente');
-            navigate('/facturas');
+            setSuccessMsg('Factura emitida correctamente');
+            setTimeout(() => navigate('/facturas'), 1200);
 
         } catch (e: any) {
             alert('Error: ' + e.message);
@@ -231,13 +259,56 @@ const NuevaFactura: React.FC = () => {
                 <tbody>
                     {detalles.map((d, i) => (
                         <tr key={i}>
-                            <td><input type="number" style={cell} value={d.cantidad}
-                                onChange={e => actualizarItem(i, 'cantidad', Number(e.target.value))} /></td>
-                            <td><input style={cell} onChange={e => actualizarItem(i, 'descripcion', e.target.value)} /></td>
-                            <td><input type="number" style={cell} value={d.precio_unitario}
-                                onChange={e => actualizarItem(i, 'precio_unitario', Number(e.target.value))} /></td>
+                            <td>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    style={cell}
+                                    value={d.cantidad}
+                                    ref={el => { inputsRef.current[`cantidad-${i}`] = el; }}
+                                    onChange={e => actualizarItem(i, 'cantidad', parseFloat(e.target.value || '0'))}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            inputsRef.current[`descripcion-${i}`]?.focus();
+                                        }
+                                    }}
+                                />
+                            </td>
+                            <td>
+                                <input
+                                    style={cell}
+                                    value={d.descripcion}
+                                    ref={el => { inputsRef.current[`descripcion-${i}`] = el; }}
+                                    onChange={e => actualizarItem(i, 'descripcion', e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            inputsRef.current[`precio-${i}`]?.focus();
+                                        }
+                                    }}
+                                />
+                            </td>
+                            <td>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    style={cell}
+                                    value={d.precio_unitario}
+                                    ref={el => { inputsRef.current[`precio-${i}`] = el; }}
+                                    onChange={e => actualizarItem(i, 'precio_unitario', parseFloat(e.target.value || '0'))}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            // si es la última fila, añadir nueva y enfocar su cantidad
+                                            if (i === detalles.length - 1) {
+                                                agregarFila();
+                                            } else {
+                                                inputsRef.current[`cantidad-${i + 1}`]?.focus();
+                                            }
+                                        }
+                                    }}
+                                />
+                            </td>
                             <td style={{ textAlign: 'right', padding: 10 }}>
-                                ${d.precio_total.toFixed(2)}
+                                ${Number(d.precio_total || 0).toFixed(2)}
                             </td>
                             <td>
                                 <button onClick={() => eliminarFila(i)} style={delBtn}>✖</button>
@@ -251,15 +322,27 @@ const NuevaFactura: React.FC = () => {
 
             {/* TOTALES */}
             <div style={totalesBox}>
+                {successMsg && (
+                    <div style={{ padding: 12, background: '#e6ffed', border: '1px solid #b8f1c8', borderRadius: 6, marginBottom: 12 }}>
+                        {successMsg}
+                    </div>
+                )}
                 <p>Subtotal <b>${totales.subtotal.toFixed(2)}</b></p>
-                <p>Base 0% <b>${totales.base0.toFixed(2)}</b></p>
-                <p>Base 15% <b>${totales.base15.toFixed(2)}</b></p>
                 <p>IVA 15% <b>${totales.iva.toFixed(2)}</b></p>
                 <p>
                     Descuento
                     <input type="number" value={descuento}
                         onChange={e => setDescuento(Number(e.target.value))}
                         style={{ width: 80, textAlign: 'right' }} />
+                </p>
+                <p>
+                    Forma de pago
+                    <select style={{ width: '100%', padding: 8, marginTop: 6 }} value={metodoPagoSel} onChange={e => setMetodoPagoSel(Number(e.target.value))}>
+                        <option value="">Seleccione forma de pago</option>
+                        {metodosPago.map(m => (
+                            <option key={m.id} value={m.id}>{m.nombre}</option>
+                        ))}
+                    </select>
                 </p>
                 <hr />
                 <h3>TOTAL ${totales.total.toFixed(2)}</h3>

@@ -4,7 +4,9 @@ const orm = require('../../Database/dataBase.orm');
 // LISTAR FACTURAS
 facturaCtl.listarFacturas = async (req, res) => {
     try {
-        const facturas = await orm.factura.findAll();
+        const facturas = await orm.factura.findAll({
+            include: [{ model: orm.forma_pago }, { model: orm.cliente }, { model: orm.tienda }]
+        });
         res.json(facturas);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -21,7 +23,8 @@ facturaCtl.obtenerFactura = async (req, res) => {
             include: [
                 { model: orm.detalle_factura },
                 { model: orm.cliente },
-                { model: orm.tienda }
+                { model: orm.tienda },
+                { model: orm.forma_pago }
             ]
         });
 

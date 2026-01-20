@@ -172,17 +172,12 @@ body {
 }
 
 /* Estilos para los contenedores de vistas */
-.view-container {
-  min-height: calc(100vh - var(--navbar-height, 72px));
+.view-container.full-width {
+  max-width: none;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 2rem;
-  background: white;
-  display: block;
-  flex: 1;
-  overflow: auto;
 }
+
 
 .view-container:hover {
   box-shadow: none;

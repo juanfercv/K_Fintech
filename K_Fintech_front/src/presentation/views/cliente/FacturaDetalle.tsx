@@ -18,43 +18,52 @@ const VerFactura: React.FC = () => {
     }, [id]);
 
     const centerText: React.CSSProperties = { textAlign: 'center' };
+
     if (loading) return <p style={centerText}>Cargando factura...</p>;
     if (!factura) return <p>No se pudo cargar la factura</p>;
 
     return (
         <div style={{
-            maxWidth: '900px',
-            margin: '40px auto',
-            padding: '30px',
-            background: '#fff',
-            boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-            fontFamily: 'Arial, sans-serif'
-        }}>
+    maxWidth: '2000px',
+    margin: '32px auto',
+    padding: '40px',
+    background: '#ffffff',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+    fontFamily: 'Segoe UI, Arial, sans-serif',
+    borderRadius: 10,
+    border: '1px solid #e5e7eb'
+}}>
 
-            {/* BOTÓN */}
+            {/* BOTÓN VOLVER */}
             <button
                 onClick={() => navigate(-1)}
                 style={{
-                    marginBottom: '20px',
+                    marginBottom: 24,
                     background: 'none',
                     border: 'none',
-                    color: '#007bff',
-                    cursor: 'pointer'
+                    color: '#2563eb',
+                    cursor: 'pointer',
+                    fontSize: 15
                 }}
             >
                 ← Volver
             </button>
 
             {/* ENCABEZADO */}
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 24
+            }}>
                 <div>
                     <h2 style={{ margin: 0 }}>{factura.tienda?.nombreTienda}</h2>
-                    <p style={{ margin: '4px 0' }}>{factura.tienda?.direccion_sucursal_tienda}</p>
-                    <p style={{ margin: '4px 0' }}>RUC: {factura.tienda?.RUCTienda}</p>
-                    <p style={{ margin: '4px 0' }}>Tel: {factura.tienda?.telefono}</p>
+                    <p style={{ margin: '6px 0' }}>{factura.tienda?.direccion_sucursal_tienda}</p>
+                    <p style={{ margin: '6px 0' }}>RUC: {factura.tienda?.RUCTienda}</p>
+                    <p style={{ margin: '6px 0' }}>Tel: {factura.tienda?.telefono}</p>
                 </div>
 
-                <div style={{ textAlign: ('right' as React.CSSProperties['textAlign']) }}>
+                <div style={{ textAlign: 'right' }}>
                     <h2 style={{ margin: 0 }}>FACTURA</h2>
                     <p><b>N°:</b> {factura.idFactura}</p>
                     <p><b>Fecha:</b> {factura.fecha_emision}</p>
@@ -62,28 +71,42 @@ const VerFactura: React.FC = () => {
                 </div>
             </div>
 
-            <hr />
+            <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', margin: '24px 0' }} />
 
-            {/* CLIENTE */}
-            <h3>Datos del Cliente</h3>
+            {/* DATOS DEL CLIENTE */}
             <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '10px'
+                padding: 20,
+                border: '1px solid #e5e7eb',
+                borderRadius: 10,
+                background: '#f9fafb',
+                marginBottom: 24
             }}>
-                <p><b>Nombre:</b> {factura.cliente?.nombre_cliente}</p>
-                <p><b>Cédula:</b> {factura.cliente?.cedula_cliente}</p>
-                <p><b>Correo:</b> {factura.cliente?.correo_cliente}</p>
-                <p><b>Dirección:</b> {factura.cliente?.direccion_cliente}</p>
+                <h3 style={{ marginTop: 0 }}>Datos del Cliente</h3>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: 16
+                }}>
+                    <div><b>Nombre</b><div style={{ marginTop: 6 }}>{factura.cliente?.nombre_cliente || '—'}</div></div>
+                    <div><b>Cédula</b><div style={{ marginTop: 6 }}>{factura.cliente?.cedula_cliente || '—'}</div></div>
+                    <div><b>Correo</b><div style={{ marginTop: 6 }}>{factura.cliente?.correo_cliente || '—'}</div></div>
+                    <div><b>Dirección</b><div style={{ marginTop: 6 }}>{factura.cliente?.direccion_cliente || '—'}</div></div>
+                </div>
             </div>
-
-            <hr />
 
             {/* DETALLE */}
             <h3>Detalle de la Factura</h3>
 
-            <table width="100%" style={{ borderCollapse: 'collapse' }}>
-                <thead style={{ background: '#f2f2f2' }}>
+            <table
+                width="100%"
+                style={{
+                    borderCollapse: 'collapse',
+                    border: '1px solid #e5e7eb',
+                    marginTop: 12,
+                    fontSize: 15
+                }}
+            >
+                <thead style={{ background: '#f3f4f6' }}>
                     <tr>
                         <th style={th}>Descripción</th>
                         <th style={th}>Cantidad</th>
@@ -105,37 +128,80 @@ const VerFactura: React.FC = () => {
 
             {/* TOTALES */}
             <div style={{
-                marginTop: '20px',
+                marginTop: 24,
                 display: 'flex',
                 justifyContent: 'flex-end'
             }}>
-                <div style={{ width: '300px' }}>
-                    <p style={totalRow}><span>Subtotal:</span> <span>${factura.subtotal}</span></p>
-                    <p style={totalRow}><span>IVA (15%):</span> <span>${factura.iva}</span></p>
-                    <hr />
-                    <h3 style={{ textAlign: ('right' as React.CSSProperties['textAlign']) }}>TOTAL: ${factura.total}</h3>
+                <div style={{ width: 340 }}>
+                    <p style={totalRow}><span>Subtotal:</span><span>${factura.subtotal}</span></p>
+                    <p style={totalRow}><span>IVA (15%):</span><span>${factura.iva}</span></p>
+                    <hr style={{ margin: '12px 0' }} />
+                    <h2 style={{ textAlign: 'right', margin: 0 }}>
+                        TOTAL: ${factura.total}
+                    </h2>
                 </div>
             </div>
 
+            {/* FORMA DE PAGO */}
+            <div style={{ marginTop: 32 }}>
+                <div style={{
+                    padding: 20,
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 10,
+                    background: '#f9fafb'
+                }}>
+                    <h3 style={{ marginTop: 0 }}>Forma de pago</h3>
+                    {(() => {
+                        const mp =
+                            factura.forma_pago ||
+                            factura.formaPago ||
+                            factura.forma ||
+                            factura.metodo_pago ||
+                            factura.metodoPago ||
+                            null;
+
+                        if (!mp) return <p>No registrada</p>;
+
+                        return (
+                            <div>
+                                <p style={{ margin: '6px 0', fontWeight: 600 }}>
+                                    {mp.nombre ?? mp.nombre_forma_pago ?? mp.id ?? 'Método'}
+                                </p>
+                                {mp.descripcion && (
+                                    <p style={{ margin: '6px 0', color: '#555' }}>
+                                        {mp.descripcion}
+                                    </p>
+                                )}
+                            </div>
+                        );
+                    })()}
+                </div>
+            </div>
         </div>
     );
 };
 
 const th: React.CSSProperties = {
-    padding: '10px',
-    borderBottom: '1px solid #ccc',
-    textAlign: 'left'
+    padding: '14px',
+    borderRight: '1px solid #e5e7eb',
+    borderBottom: '1px solid #e5e7eb',
+    textAlign: 'left',
+    background: '#f3f4f6',
+    fontWeight: 600
 };
 
 const td: React.CSSProperties = {
-    padding: '10px',
-    borderBottom: '1px solid #eee'
+    padding: '14px',
+    borderRight: '1px solid #e5e7eb',
+    borderBottom: '1px solid #e5e7eb',
+    verticalAlign: 'top',
+    lineHeight: 1.5
 };
 
 const totalRow: React.CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
-    margin: '5px 0'
+    margin: '6px 0'
 };
 
 export default VerFactura;
