@@ -19,7 +19,7 @@ const Navigation: React.FC = () => {
   return (
     <nav className="navbar">
       <div className="navbar-content">
-        <h1 className="navbar-title">Sistema de Facturación</h1>
+        <h1 className="navbar-title">K_Fintech</h1>
         <ul className="nav-links">
           <li>
             <Link 
