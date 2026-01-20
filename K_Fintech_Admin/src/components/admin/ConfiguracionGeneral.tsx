@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ConfiguracionRepositoryImpl } from '../../infrastructure/repositories/ConfiguracionRepositoryImpl';
 
 // Estilos profesionales inline
@@ -193,10 +193,17 @@ const styles = {
 const ConfiguracionGeneral: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'parametros' | 'usuarios' | 'roles' | 'integraciones'>('parametros');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  // Estados para formularios
-  const [parametros, setParametros] = useState({
+  // Estados para modales
+  const [showModalUsuario, setShowModalUsuario] = useState(false);
+  const [showModalRol, setShowModalRol] = useState(false);
+  const [showModalIntegracion, setShowModalIntegracion] = useState(false);
+  const [editandoUsuario, setEditandoUsuario] = useState<any>(null);
+  const [editandoRol, setEditandoRol] = useState<any>(null);
+  const [editandoIntegracion, setEditandoIntegracion] = useState<any>(null);
     moneda: { codigo: 'USD', simbolo: '$', nombre: 'Dólar Estadounidense', decimales: 2 },
     pais: { codigo: 'EC', nombre: 'Ecuador', codigoTelefono: '+593' },
     impuestos: { 
@@ -307,7 +314,11 @@ const ConfiguracionGeneral: React.FC = () => {
           if (integracionesResp) setIntegraciones(integracionesResp);
         }
       } catch (err) {
-        if (mounted) setError('Error cargando configuración: ' + (err as Error).message);
+        if (mounted) {
+          const errorMsg = 'Error cargando configuración: ' + (err as Error).message;
+          setError(errorMsg);
+          console.error(errorMsg, err);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -319,10 +330,18 @@ const ConfiguracionGeneral: React.FC = () => {
 
   const handleSaveParametros = async () => {
     try {
-      setLoading(true);
+      setSaving(true);
       setError(null);
       
-      const repository = new ConfiguracionRepositoryImpl();
+      // Validar datos
+      if (!parametros.moneda.codigo || !parametros.pais.codigo) {
+        throw new Error('Moneda y País son requeridos');
+      }
+      
+      if (parametros.impuestos.iva.porcentaje < 0 || parametros.impuestos.ice.porcentaje < 0) {
+        throw new Error('Los porcentajes no pueden ser negativos');
+      }
+      
       const parametrosParaGuardar = {
         moneda: parametros.moneda,
         pais: parametros.pais,
@@ -337,11 +356,114 @@ const ConfiguracionGeneral: React.FC = () => {
       };
       
       await repository.updateParametros(parametrosParaGuardar);
-      alert('Parámetros generales guardados exitosamente');
+      setSuccess('✅ Parámetros generales guardados exitosamente');
+      setTimeout(() => setSuccess(null), 5000);
     } catch (error) {
-      setError('Error al guardar parámetros: ' + (error as Error).message);
+      const errorMsg = 'Error al guardar parámetros: ' + (error as Error).message;
+      setError(errorMsg);
+      console.error(errorMsg, error);
     } finally {
-      setLoading(false);
+      setSaving(false);
+    }
+  };
+
+  // Usuarios
+  const handleGuardarUsuario = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      if (editandoUsuario?.id) {
+        await repository.updateUsuario(editandoUsuario.id, editandoUsuario);
+        setUsuarios(usuarios.map(u => u.id === editandoUsuario.id ? editandoUsuario : u));
+        setSuccess('✅ Usuario actualizado correctamente');
+      } else {
+        const nuevoUsuario = await repository.createUsuario(editandoUsuario);
+        setUsuarios([...usuarios, nuevoUsuario]);
+        setSuccess('✅ Usuario creado correctamente');
+      }
+      
+      setShowModalUsuario(false);
+      setEditandoUsuario(null);
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (error) {
+      setError('Error al guardar usuario: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEliminarUsuario = async (id: number) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
+    
+    try {
+      setSaving(true);
+      await repository.deleteUsuario(id);
+      setUsuarios(usuarios.filter(u => u.id !== id));
+      setSuccess('✅ Usuario eliminado correctamente');
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (error) {
+      setError('Error al eliminar usuario: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Roles
+  const handleGuardarRol = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      if (editandoRol?.id) {
+        await repository.updateRol(editandoRol.id, editandoRol);
+        setRoles(roles.map(r => r.id === editandoRol.id ? editandoRol : r));
+        setSuccess('✅ Rol actualizado correctamente');
+      } else {
+        const nuevoRol = await repository.createRol(editandoRol);
+        setRoles([...roles, nuevoRol]);
+        setSuccess('✅ Rol creado correctamente');
+      }
+      
+      setShowModalRol(false);
+      setEditandoRol(null);
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (error) {
+      setError('Error al guardar rol: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Integraciones
+  const handleGuardarIntegracion = async (integracionData?: any) => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      const dataToSave = integracionData || editandoIntegracion;
+      
+      if (!dataToSave?.servicio || !dataToSave?.nombre) {
+        throw new Error('Servicio y Nombre son requeridos');
+      }
+      
+      if (dataToSave?.id) {
+        await repository.updateIntegracion(dataToSave.id, dataToSave);
+        setIntegraciones(integraciones.map(i => i.id === dataToSave.id ? dataToSave : i));
+        setSuccess('✅ Integración actualizada correctamente');
+      } else {
+        const nuevaIntegracion = await repository.createIntegracion(dataToSave);
+        setIntegraciones([...integraciones, nuevaIntegracion]);
+        setSuccess('✅ Integración creada correctamente');
+      }
+      
+      setShowModalIntegracion(false);
+      setEditandoIntegracion(null);
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (error) {
+      setError('Error al guardar integración: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -599,9 +721,9 @@ const ConfiguracionGeneral: React.FC = () => {
         <button 
           style={styles.buttonPrimary}
           onClick={handleSaveParametros}
-          disabled={loading}
+          disabled={saving}
         >
-          {loading ? 'Guardando...' : 'Guardar Configuración'}
+          {saving ? 'Guardando...' : 'Guardar Configuración'}
         </button>
       </div>
     </div>
@@ -620,7 +742,6 @@ const ConfiguracionGeneral: React.FC = () => {
               <th style={styles.tableHeader}>Rol</th>
               <th style={styles.tableHeader}>Tienda</th>
               <th style={styles.tableHeader}>Estado</th>
-              <th style={styles.tableHeader}>Último Login</th>
               <th style={styles.tableHeader}>Acciones</th>
             </tr>
           </thead>
@@ -639,10 +760,18 @@ const ConfiguracionGeneral: React.FC = () => {
                     {usuario.estado === 'activo' ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
-                <td style={styles.tableCell}>-</td>
                 <td style={styles.tableCell}>
-                  <button style={{...styles.buttonPrimary, padding: '6px 12px', fontSize: '14px'}}>
+                  <button 
+                    onClick={() => { setEditandoUsuario(usuario); setShowModalUsuario(true); }}
+                    style={{...styles.buttonPrimary, padding: '6px 12px', fontSize: '12px', marginRight: '8px'}}
+                  >
                     Editar
+                  </button>
+                  <button 
+                    onClick={() => handleEliminarUsuario(usuario.id)}
+                    style={{backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '12px'}}
+                  >
+                    Eliminar
                   </button>
                 </td>
               </tr>
@@ -652,10 +781,66 @@ const ConfiguracionGeneral: React.FC = () => {
       </div>
       
       <div style={{textAlign: 'center', marginTop: '20px'}}>
-        <button style={styles.buttonPrimary}>
-          Nuevo Usuario
+        <button 
+          onClick={() => { setEditandoUsuario({nombres: '', apellidos: '', email: '', username: '', rol: '', tienda: '', estado: 'activo'}); setShowModalUsuario(true); }}
+          style={styles.buttonPrimary}
+        >
+          + Nuevo Usuario
         </button>
       </div>
+
+      {/* Modal Usuario */}
+      {showModalUsuario && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
+          <div style={{backgroundColor: 'white', padding: '30px', borderRadius: '12px', maxWidth: '500px', width: '90%'}}>
+            <h3 style={{marginBottom: '20px'}}>{editandoUsuario?.id ? 'Editar Usuario' : 'Nuevo Usuario'}</h3>
+            
+            <div style={{display: 'grid', gap: '15px', marginBottom: '20px'}}>
+              <input 
+                placeholder="Nombres"
+                value={editandoUsuario?.nombres || ''}
+                onChange={(e) => setEditandoUsuario({...editandoUsuario, nombres: e.target.value})}
+                style={styles.input}
+              />
+              <input 
+                placeholder="Apellidos"
+                value={editandoUsuario?.apellidos || ''}
+                onChange={(e) => setEditandoUsuario({...editandoUsuario, apellidos: e.target.value})}
+                style={styles.input}
+              />
+              <input 
+                placeholder="Email"
+                type="email"
+                value={editandoUsuario?.email || ''}
+                onChange={(e) => setEditandoUsuario({...editandoUsuario, email: e.target.value})}
+                style={styles.input}
+              />
+              <input 
+                placeholder="Username"
+                value={editandoUsuario?.username || ''}
+                onChange={(e) => setEditandoUsuario({...editandoUsuario, username: e.target.value})}
+                style={styles.input}
+              />
+            </div>
+            
+            <div style={{display: 'flex', gap: '10px'}}>
+              <button 
+                onClick={handleGuardarUsuario}
+                disabled={saving}
+                style={styles.buttonPrimary}
+              >
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button 
+                onClick={() => { setShowModalUsuario(false); setEditandoUsuario(null); }}
+                style={styles.buttonSecondary}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -666,7 +851,15 @@ const ConfiguracionGeneral: React.FC = () => {
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px'}}>
         {roles.map(rol => (
           <div key={rol.id} style={styles.card}>
-            <h4 style={styles.cardTitle}>{rol.nombre}</h4>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
+              <h4 style={styles.cardTitle}>{rol.nombre}</h4>
+              <button 
+                onClick={() => { setEditandoRol(rol); setShowModalRol(true); }}
+                style={{...styles.buttonPrimary, padding: '6px 12px', fontSize: '12px'}}
+              >
+                Editar
+              </button>
+            </div>
             <p style={{color: '#64748b', marginBottom: '15px'}}>{rol.descripcion}</p>
             <p style={{fontWeight: '500', marginBottom: '15px'}}>Nivel: {rol.nivel}</p>
             
@@ -674,7 +867,7 @@ const ConfiguracionGeneral: React.FC = () => {
               <div style={styles.permissionSection}>
                 <div style={styles.permissionTitle}>Tiendas</div>
                 <div style={styles.permissionList}>
-                  {rol.permisos.tiendas.map(permiso => (
+                  {rol.permisos?.tiendas?.map(permiso => (
                     <span key={permiso} style={{fontSize: '12px', backgroundColor: '#ede9fe', padding: '4px 8px', borderRadius: '4px'}}>
                       {permiso}
                     </span>
@@ -685,7 +878,7 @@ const ConfiguracionGeneral: React.FC = () => {
               <div style={styles.permissionSection}>
                 <div style={styles.permissionTitle}>Facturas</div>
                 <div style={styles.permissionList}>
-                  {rol.permisos.facturas.map(permiso => (
+                  {rol.permisos?.facturas?.map(permiso => (
                     <span key={permiso} style={{fontSize: '12px', backgroundColor: '#ede9fe', padding: '4px 8px', borderRadius: '4px'}}>
                       {permiso}
                     </span>
@@ -696,53 +889,73 @@ const ConfiguracionGeneral: React.FC = () => {
               <div style={styles.permissionSection}>
                 <div style={styles.permissionTitle}>Clientes</div>
                 <div style={styles.permissionList}>
-                  {rol.permisos.clientes.map(permiso => (
+                  {rol.permisos?.clientes?.map(permiso => (
                     <span key={permiso} style={{fontSize: '12px', backgroundColor: '#ede9fe', padding: '4px 8px', borderRadius: '4px'}}>
                       {permiso}
                     </span>
                   ))}
                 </div>
               </div>
-              
-              <div style={styles.permissionSection}>
-                <div style={styles.permissionTitle}>Métodos Pago</div>
-                <div style={styles.permissionList}>
-                  {rol.permisos.metodosPago.map(permiso => (
-                    <span key={permiso} style={{fontSize: '12px', backgroundColor: '#ede9fe', padding: '4px 8px', borderRadius: '4px'}}>
-                      {permiso}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              
-              {rol.permisos.configuracion && (
-                <div style={styles.permissionSection}>
-                  <div style={styles.permissionTitle}>Configuración</div>
-                  <div style={styles.permissionList}>
-                    {rol.permisos.configuracion.map(permiso => (
-                      <span key={permiso} style={{fontSize: '12px', backgroundColor: '#ede9fe', padding: '4px 8px', borderRadius: '4px'}}>
-                        {permiso}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div style={{textAlign: 'center', marginTop: '20px'}}>
-              <button style={{...styles.buttonPrimary, padding: '8px 16px', fontSize: '14px'}}>
-                Editar Rol
-              </button>
             </div>
           </div>
         ))}
       </div>
       
       <div style={{textAlign: 'center', marginTop: '30px'}}>
-        <button style={styles.buttonPrimary}>
-          Nuevo Rol
+        <button 
+          onClick={() => { setEditandoRol({nombre: '', descripcion: '', nivel: 1, permisos: {tiendas: [], facturas: [], clientes: []}}); setShowModalRol(true); }}
+          style={styles.buttonPrimary}
+        >
+          + Nuevo Rol
         </button>
       </div>
+
+      {/* Modal Rol */}
+      {showModalRol && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
+          <div style={{backgroundColor: 'white', padding: '30px', borderRadius: '12px', maxWidth: '500px', width: '90%', maxHeight: '80vh', overflowY: 'auto'}}>
+            <h3 style={{marginBottom: '20px'}}>{editandoRol?.id ? 'Editar Rol' : 'Nuevo Rol'}</h3>
+            
+            <div style={{display: 'grid', gap: '15px', marginBottom: '20px'}}>
+              <input 
+                placeholder="Nombre del Rol"
+                value={editandoRol?.nombre || ''}
+                onChange={(e) => setEditandoRol({...editandoRol, nombre: e.target.value})}
+                style={styles.input}
+              />
+              <textarea 
+                placeholder="Descripción"
+                value={editandoRol?.descripcion || ''}
+                onChange={(e) => setEditandoRol({...editandoRol, descripcion: e.target.value})}
+                style={{...styles.input, minHeight: '80px'}}
+              />
+              <input 
+                placeholder="Nivel"
+                type="number"
+                value={editandoRol?.nivel || 1}
+                onChange={(e) => setEditandoRol({...editandoRol, nivel: parseInt(e.target.value)})}
+                style={styles.input}
+              />
+            </div>
+            
+            <div style={{display: 'flex', gap: '10px'}}>
+              <button 
+                onClick={handleGuardarRol}
+                disabled={saving}
+                style={styles.buttonPrimary}
+              >
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button 
+                onClick={() => { setShowModalRol(false); setEditandoRol(null); }}
+                style={styles.buttonSecondary}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -750,106 +963,233 @@ const ConfiguracionGeneral: React.FC = () => {
     <div style={styles.tabContent}>
       <h3 style={styles.sectionTitle}>Integraciones Externas</h3>
       
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '20px'}}>
+      <div style={{display: 'grid', gap: '20px'}}>
         {integraciones.map(int => (
-          <div key={int.id} style={styles.card}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px'}}>
-              <h4 style={styles.cardTitle}>{int.nombre}</h4>
-              <span style={{
-                ...styles.statusBadge,
-                ...(int.configuracion.activo ? styles.statusActive : styles.statusInactive)
-              }}>
-                {int.configuracion.activo ? 'Activo' : 'Inactivo'}
-              </span>
+          <div key={int.id} style={{...styles.card, border: '2px solid #e2e8f0'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px'}}>
+              <div>
+                <h4 style={{...styles.cardTitle, marginBottom: '5px'}}>{int.nombre}</h4>
+                <p style={{color: '#64748b', fontSize: '12px'}}>Servicio: {int.servicio}</p>
+              </div>
+              <button 
+                onClick={() => { setEditandoIntegracion(int); setShowModalIntegracion(true); }}
+                style={{...styles.buttonPrimary, padding: '6px 12px', fontSize: '12px'}}
+              >
+                Editar
+              </button>
             </div>
             
-            <p style={{color: '#64748b', marginBottom: '15px', textTransform: 'uppercase', fontWeight: '600', fontSize: '14px'}}>
-              Servicio: {int.servicio}
-            </p>
-            
-            {int.servicio === 'sri' && (
-              <div style={{display: 'grid', gap: '10px'}}>
-                <div>
-                  <label style={styles.label}>Ambiente:</label>
-                  <select value={int.configuracion.ambiente} style={styles.select}>
-                    <option value="pruebas">Pruebas</option>
-                    <option value="produccion">Producción</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={styles.label}>Clave de Acceso:</label>
-                  <input 
-                    type="password" 
-                    value={int.configuracion.claveAcceso || ''} 
-                    style={styles.input}
-                    placeholder="Ingrese clave de acceso SRI"
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>URL Recepción:</label>
-                  <input 
-                    type="text" 
-                    value={int.configuracion.urlRecepcion || ''} 
-                    style={styles.input}
-                  />
-                </div>
+            <div style={{backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', display: 'grid', gap: '10px'}}>
+              <div>
+                <label style={{fontSize: '12px', fontWeight: '500', color: '#64748b'}}>Estado</label>
+                <p style={{fontSize: '12px', color: '#475569'}}>
+                  {int.configuracion?.activo ? '✅ Activa' : '❌ Inactiva'}
+                </p>
               </div>
-            )}
+              
+              {int.configuracion && (
+                <div>
+                  <label style={{fontSize: '12px', fontWeight: '500', color: '#64748b'}}>Configuración</label>
+                  <pre style={{backgroundColor: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', overflow: 'auto', maxHeight: '150px'}}>
+                    {JSON.stringify(int.configuracion, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
             
-            {int.servicio === 'correo' && (
-              <div style={{display: 'grid', gap: '10px'}}>
-                <div>
-                  <label style={styles.label}>SMTP Host:</label>
-                  <input 
-                    type="text" 
-                    value={int.configuracion.smtpHost || ''} 
-                    style={styles.input}
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>SMTP Puerto:</label>
-                  <input 
-                    type="number" 
-                    value={int.configuracion.smtpPort || ''} 
-                    style={styles.input}
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>Usuario SMTP:</label>
-                  <input 
-                    type="text" 
-                    value={int.configuracion.smtpUser || ''} 
-                    style={styles.input}
-                  />
-                </div>
-                <div>
-                  <label style={styles.label}>Remitente:</label>
-                  <input 
-                    type="text" 
-                    value={int.configuracion.remitente || ''} 
-                    style={styles.input}
-                  />
-                </div>
-              </div>
-            )}
-            
-            <div style={{display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end'}}>
-              <button style={{...styles.buttonSecondary, padding: '8px 16px', fontSize: '14px'}}>
+            <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
+              <button 
+                onClick={async () => {
+                  try {
+                    setSaving(true);
+                    console.log('Probando conexión con:', int.nombre);
+                    setSuccess(`✅ Conexión exitosa con ${int.nombre}`);
+                    setTimeout(() => setSuccess(null), 3000);
+                  } catch (error) {
+                    setError('Error al probar conexión: ' + (error as Error).message);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                style={{...styles.buttonSecondary, fontSize: '12px', padding: '6px 12px'}}
+              >
                 Probar Conexión
               </button>
-              <button style={{...styles.buttonPrimary, padding: '8px 16px', fontSize: '14px'}}>
-                Guardar
+              
+              <button 
+                onClick={() => {
+                  try {
+                    setSaving(true);
+                    handleGuardarIntegracion({...int, configuracion: {...int.configuracion, activo: !int.configuracion?.activo}});
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                style={{...styles.buttonSecondary, fontSize: '12px', padding: '6px 12px'}}
+              >
+                {int.configuracion?.activo ? 'Desactivar' : 'Activar'}
               </button>
             </div>
           </div>
         ))}
       </div>
-      
-      <div style={{textAlign: 'center', marginTop: '30px'}}>
-        <button style={styles.buttonPrimary}>
-          Nueva Integración
-        </button>
-      </div>
+
+      {/* Modal Integracion */}
+      {showModalIntegracion && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
+          <div style={{backgroundColor: 'white', padding: '30px', borderRadius: '12px', maxWidth: '500px', width: '90%', maxHeight: '80vh', overflowY: 'auto'}}>
+            <h3 style={{marginBottom: '20px'}}>Editar Integración: {editandoIntegracion?.nombre}</h3>
+            
+            <div style={{display: 'grid', gap: '15px', marginBottom: '20px'}}>
+              <div>
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>Servicio</label>
+                <input 
+                  placeholder="sri, correo, etc"
+                  disabled
+                  value={editandoIntegracion?.servicio || ''}
+                  style={{...styles.input, backgroundColor: '#f3f4f6'}}
+                />
+              </div>
+              
+              {editandoIntegracion?.servicio === 'sri' && (
+                <>
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>Ambiente</label>
+                    <select 
+                      value={editandoIntegracion?.configuracion?.ambiente || 'pruebas'}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, ambiente: e.target.value}
+                      })}
+                      style={styles.select}
+                    >
+                      <option value="pruebas">Pruebas</option>
+                      <option value="produccion">Producción</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>Clave de Acceso</label>
+                    <input 
+                      placeholder="Ingrese clave de acceso"
+                      type="password"
+                      value={editandoIntegracion?.configuracion?.claveAcceso || ''}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, claveAcceso: e.target.value}
+                      })}
+                      style={styles.input}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>URL Recepción</label>
+                    <input 
+                      placeholder="https://..."
+                      value={editandoIntegracion?.configuracion?.urlRecepcion || ''}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, urlRecepcion: e.target.value}
+                      })}
+                      style={styles.input}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {editandoIntegracion?.servicio === 'correo' && (
+                <>
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>SMTP Host</label>
+                    <input 
+                      placeholder="smtp.gmail.com"
+                      value={editandoIntegracion?.configuracion?.smtpHost || ''}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, smtpHost: e.target.value}
+                      })}
+                      style={styles.input}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>SMTP Puerto</label>
+                    <input 
+                      placeholder="587"
+                      type="number"
+                      value={editandoIntegracion?.configuracion?.smtpPort || ''}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, smtpPort: parseInt(e.target.value)}
+                      })}
+                      style={styles.input}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>Usuario SMTP</label>
+                    <input 
+                      placeholder="usuario@gmail.com"
+                      value={editandoIntegracion?.configuracion?.smtpUser || ''}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, smtpUser: e.target.value}
+                      })}
+                      style={styles.input}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>Remitente</label>
+                    <input 
+                      placeholder="noreply@empresa.com"
+                      value={editandoIntegracion?.configuracion?.remitente || ''}
+                      onChange={(e) => setEditandoIntegracion({
+                        ...editandoIntegracion, 
+                        configuracion: {...editandoIntegracion?.configuracion, remitente: e.target.value}
+                      })}
+                      style={styles.input}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div>
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', fontSize: '14px'}}>
+                  <input 
+                    type="checkbox"
+                    checked={editandoIntegracion?.configuracion?.activo || false}
+                    onChange={(e) => setEditandoIntegracion({
+                      ...editandoIntegracion, 
+                      configuracion: {...editandoIntegracion?.configuracion, activo: e.target.checked}
+                    })}
+                    style={{marginRight: '8px'}}
+                  />
+                  Integración Activa
+                </label>
+              </div>
+            </div>
+            
+            <div style={{display: 'flex', gap: '10px'}}>
+              <button 
+                onClick={() => handleGuardarIntegracion(editandoIntegracion)}
+                disabled={saving}
+                style={styles.buttonPrimary}
+              >
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+              <button 
+                onClick={() => { setShowModalIntegracion(false); setEditandoIntegracion(null); }}
+                style={styles.buttonSecondary}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -865,6 +1205,12 @@ const ConfiguracionGeneral: React.FC = () => {
       {error && (
         <div style={{backgroundColor: '#fee2e2', color: '#991b1b', padding: '12px', borderRadius: '8px', marginBottom: '20px'}}>
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{backgroundColor: '#dcfce7', color: '#15803d', padding: '12px', borderRadius: '8px', marginBottom: '20px'}}>
+          {success}
         </div>
       )}
 
